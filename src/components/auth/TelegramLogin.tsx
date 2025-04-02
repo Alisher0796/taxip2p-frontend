@@ -4,7 +4,17 @@ import { setAuthHeader } from '../../services/api'
 
 declare global {
   interface Window {
-    Telegram: any
+    Telegram?: {
+      WebApp?: {
+        initDataUnsafe?: {
+          user?: {
+            id: number
+            username?: string
+          }
+        }
+        ready: () => void
+      }
+    }
   }
 }
 
@@ -12,7 +22,9 @@ export default function TelegramLogin() {
   const { setUser } = useUser()
 
   useEffect(() => {
-    const tg = window.Telegram.WebApp
+    const tg = window.Telegram?.WebApp
+    if (!tg) return // если нет Telegram WebApp — просто выходим
+
     tg.ready()
 
     const telegramId = tg.initDataUnsafe?.user?.id
