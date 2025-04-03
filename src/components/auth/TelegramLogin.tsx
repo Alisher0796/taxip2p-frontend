@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { useUser } from '../../context/UserContext'
-import { setAuthHeader } from '../../services/api'
+import { useUser } from '@/context/UserContext'
+import { setAuthHeader } from '@/services/api'
 
 declare global {
   interface Window {
@@ -23,7 +23,7 @@ export default function TelegramLogin() {
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp
-    if (!tg) return // если нет Telegram WebApp — просто выходим
+    if (!tg) return
 
     tg.ready()
 
@@ -31,8 +31,13 @@ export default function TelegramLogin() {
     const username = tg.initDataUnsafe?.user?.username
 
     if (telegramId) {
-      const userData = { telegramId: telegramId.toString(), username }
-      setUser(userData)
+      const userData = {
+        id: telegramId.toString(),               // 👈 ОБЯЗАТЕЛЬНО!
+        telegramId: telegramId.toString(),
+        username,
+      }
+
+      setUser(userData)                          // ✅ теперь всё типизировано
       setAuthHeader(userData.telegramId)
     }
   }, [setUser])
