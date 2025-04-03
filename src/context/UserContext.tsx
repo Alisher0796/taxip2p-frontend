@@ -1,6 +1,7 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react'
 
 interface User {
+  id: string                   // ✅ нужно для Chat и других компонентов
   telegramId: string
   username?: string
   role?: 'passenger' | 'driver'
@@ -21,8 +22,12 @@ export function useUser() {
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem('taxip2p-user')
-    return savedUser ? JSON.parse(savedUser) : null
+    try {
+      const savedUser = localStorage.getItem('taxip2p-user')
+      return savedUser ? JSON.parse(savedUser) : null
+    } catch {
+      return null
+    }
   })
 
   useEffect(() => {

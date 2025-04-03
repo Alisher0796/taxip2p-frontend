@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { api } from '../services/api'
-import { useUser } from '../context/UserContext'
-import Chat from '../components/chat/Chat'
+import { api } from '@/services/api'
+import { useUser } from '@/context/UserContext'
+import Chat from '@/components/chat/Chat'
 
 interface Order {
   id: string
@@ -21,10 +21,10 @@ export default function PassengerPage() {
   const fetchActiveOrder = async () => {
     setLoading(true)
     try {
-      const res = await api.get('/orders/active')
-      const passengerOrder = res.data.find(
-        (o: Order) => o.status !== 'completed'
-      )
+      const res = await api.get<Order[]>('/orders/active')
+      const passengerOrder = Array.isArray(res.data)
+        ? res.data.find((o) => o.status !== 'completed')
+        : null
       setOrder(passengerOrder || null)
     } catch (err) {
       console.error('Ошибка загрузки активного заказа:', err)
@@ -38,9 +38,11 @@ export default function PassengerPage() {
   }, [])
 
   const handleCreateOrder = async () => {
-    if (!price) return
+    if (!price.trim()) return
     try {
-      const res = await api.post('/orders', { price: parseFloat(price) })
+      const res = await api.post<Order>('/orders', {
+        price: parseFloat(price),
+      })
       setOrder(res.data)
       setPrice('')
     } catch (err) {
@@ -48,7 +50,8 @@ export default function PassengerPage() {
     }
   }
 
-  if (loading) return <p className="p-4">Загрузка...</p>
+  if (!user) return <p className="p-4 text-center">Загрузка профиля...</p>
+  if (loading) return <p className="p-4 text-center">Загрузка...</p>
 
   return (
     <div className="p-4 max-w-lg mx-auto space-y-6">
@@ -74,10 +77,15 @@ export default function PassengerPage() {
       ) : (
         <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow space-y-3">
           <p>
-            💸 <strong>Цена:</strong> {order.price} ₽
+            💸 <strong>Цена:</strong> {order.price} ₺
           </p>
           <p>
-            🚦 <strong>Статус:</strong> {order.status === 'pending' ? 'Ожидает водителя' : order.status === 'accepted' ? 'Принят водителем' : 'Завершён'}
+            🚦 <strong>Статус:</strong>{' '}
+            {order.status === 'pending'
+              ? 'Ожидает водителя'
+              : order.status === 'accepted'
+              ? 'Принят водителем'
+              : 'Завершён'}
           </p>
           {order.driver?.username && (
             <p>
@@ -88,7 +96,7 @@ export default function PassengerPage() {
           {order.status === 'accepted' && (
             <div className="mt-4">
               <h2 className="text-lg font-semibold mb-2">💬 Чат с водителем</h2>
-              <Chat orderId={order.id} />
+              <Chat roomId={order.id} />
             </div>
           )}
         </div>

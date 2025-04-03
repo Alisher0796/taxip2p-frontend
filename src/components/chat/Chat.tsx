@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
-import { useUser } from '../../context/UserContext'
+import { useUser } from '@/context/UserContext'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ru'
 
@@ -62,13 +62,13 @@ export default function Chat({ roomId }: ChatProps) {
     setInput('')
   }
 
-  if (!user) return null
+  if (!user || !('id' in user)) return null
 
   return (
     <div className="flex flex-col bg-gray-50 dark:bg-gray-800 rounded-2xl shadow max-h-[400px] h-[400px] overflow-hidden">
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {messages.map((msg) => {
-          const isMine = msg.senderId === user.id
+          const isMine = msg.senderId === (user as any).id
           const time = dayjs(msg.createdAt).format('HH:mm')
 
           return (

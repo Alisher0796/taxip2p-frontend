@@ -1,5 +1,3 @@
-import React from 'react'
-
 interface DriverOfferCardProps {
   price: number
   from: string
