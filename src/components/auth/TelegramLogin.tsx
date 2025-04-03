@@ -23,21 +23,35 @@ export default function TelegramLogin() {
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp
-    if (!tg) return
+    console.log('[TelegramLogin] Telegram WebApp:', tg)
+
+    if (!tg) {
+      console.warn('Telegram WebApp не найден — fallback user')
+      const mockUser = {
+        id: '999',
+        telegramId: '999',
+        username: 'debug_user',
+      }
+      setUser(mockUser)
+      setAuthHeader(mockUser.telegramId)
+      return
+    }
 
     tg.ready()
 
     const telegramId = tg.initDataUnsafe?.user?.id
     const username = tg.initDataUnsafe?.user?.username
 
+    console.log('[TelegramLogin] ID:', telegramId, 'Username:', username)
+
     if (telegramId) {
       const userData = {
-        id: telegramId.toString(),               // 👈 ОБЯЗАТЕЛЬНО!
+        id: telegramId.toString(),
         telegramId: telegramId.toString(),
         username,
       }
 
-      setUser(userData)                          // ✅ теперь всё типизировано
+      setUser(userData)
       setAuthHeader(userData.telegramId)
     }
   }, [setUser])
