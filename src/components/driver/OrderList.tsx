@@ -3,13 +3,17 @@ import { api } from '../../services/api'
 import OrderCard from './OrderCard'
 
 interface Order {
-  id: number
-  from: string
-  to: string
+  id: string
+  from?: string
+  to?: string
   price: number
 }
 
-export default function OrderList() {
+interface OrderListProps {
+  onAccept?: () => void
+}
+
+export default function OrderList({ onAccept }: OrderListProps) {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -19,7 +23,7 @@ export default function OrderList() {
       const res = await api.get('/orders/active')
       setOrders(res.data)
     } catch (err) {
-      console.error(err)
+      console.error('Ошибка загрузки заказов:', err)
     } finally {
       setLoading(false)
     }
@@ -29,14 +33,13 @@ export default function OrderList() {
     fetchOrders()
   }, [])
 
-  const handleAcceptOrder = async (id: number) => {
+  const handleAcceptOrder = async (id: string) => {
     try {
       await api.post(`/orders/${id}/accept`)
-      alert('Заказ принят!')
-      fetchOrders()
+      if (onAccept) onAccept() // ✅ если передали колбэк — переходим в дашборд
     } catch (err) {
-      console.error(err)
-      alert('Ошибка принятия заказа!')
+      console.error('Ошибка принятия заказа:', err)
+      alert('Не удалось принять заказ')
     }
   }
 
@@ -45,10 +48,12 @@ export default function OrderList() {
   return (
     <div className="space-y-4">
       {orders.length === 0 ? (
-        <p>Нет активных заказов.</p>
-      ) : orders.map(order => (
-        <OrderCard key={order.id} {...order} onAccept={handleAcceptOrder} />
-      ))}
+        <p className="text-gray-500">Нет активных заказов</p>
+      ) : (
+        orders.map(order => (
+          <OrderCard key={order.id} order={order} onAccept={handleAcceptOrder} />
+        ))
+      )}
     </div>
   )
 }

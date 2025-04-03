@@ -1,4 +1,3 @@
-// src/App.tsx
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import PassengerPage from './pages/PassengerPage'
@@ -7,6 +6,7 @@ import NotFoundPage from './pages/NotFoundPage'
 import Header from './components/common/Header'
 import Footer from './components/common/Footer'
 import TelegramLogin from './components/auth/TelegramLogin'
+import DriverDashboard from './components/driver/DriverDashboard'
 
 function App() {
   return (
@@ -20,6 +20,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/passenger" element={<PassengerPage />} />
             <Route path="/driver" element={<DriverPage />} />
+            <Route path="/driver/dashboard" element={<DriverDashboard />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>
