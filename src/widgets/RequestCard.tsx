@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { api } from '@/shared/api/http';
+
 import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider';
 import WebApp from '@twa-dev/sdk';
 import type { Order } from '@/shared/types/api';
 
 interface Props {
   order: Order;
+  onAccept: () => Promise<void>;
+  onMakeOffer: (price: number) => Promise<void>;
 }
 
-export function RequestCard({ order }: Props) {
+export function RequestCard({ order, onAccept, onMakeOffer }: Props) {
   const [price, setPrice] = useState<number | ''>('');
   const { haptic } = useTelegram();
 
@@ -18,10 +20,7 @@ export function RequestCard({ order }: Props) {
 
     try {
       WebApp.MainButton.showProgress();
-      await api.createOffer({
-        orderId: order.id,
-        price: Number(price)
-      });
+      await onMakeOffer(Number(price));
       setPrice('');
       haptic.notification('success');
       WebApp.showPopup({
@@ -94,6 +93,29 @@ export function RequestCard({ order }: Props) {
       <div className="mt-4 text-sm text-gray-500">
         Создан: {new Date(order.createdAt).toLocaleString()}
       </div>
+
+      <button
+        onClick={async () => {
+          try {
+            WebApp.MainButton.showProgress();
+            await onAccept();
+            haptic.notification('success');
+          } catch (error) {
+            console.error('Failed to accept order:', error);
+            haptic.notification('error');
+            WebApp.showPopup({
+              title: 'Ошибка',
+              message: 'Не удалось принять заказ. Попробуйте еще раз.',
+              buttons: [{ type: 'ok' }]
+            });
+          } finally {
+            WebApp.MainButton.hideProgress();
+          }
+        }}
+        className="mt-4 w-full rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:bg-green-700 dark:hover:bg-green-600"
+      >
+        Принять заказ
+      </button>
     </div>
   );
 }
