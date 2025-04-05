@@ -18,15 +18,11 @@ export const createHttp = () => {
       ...headers,
     };
 
-    // Проверяем наличие Telegram WebApp
-    if (!window.Telegram?.WebApp) {
-      console.warn('Telegram WebApp is not available');
-      throw new Error('Приложение доступно только через Telegram');
-    }
-
     // Получаем initData из WebApp
     const initData = WebApp.initData;
     const user = WebApp.initDataUnsafe?.user;
+    
+    console.log('WebApp data:', { initData, user });
     
     if (!initData || !user) {
       console.warn('WebApp initData or user is empty', { initData, user });

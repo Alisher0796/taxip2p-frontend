@@ -9,18 +9,31 @@ import { useEffect } from 'react';
 const RoleSelectPage = () => {
   const navigate = useNavigate();
   const setRole = useUserStore((state) => state.setRole);
-  const role = useUserStore((state) => state.role);
   const { isReady, webApp, hideBackButton, hideMainButton, haptic } = useTelegram();
 
   useEffect(() => {
-    if (isReady && role) {
-      const nextRoute = role === 'passenger' ? '/passenger/create' : '/driver/requests';
-      navigate(nextRoute);
-    }
+    if (!isReady) return;
 
     hideBackButton();
     hideMainButton();
-  }, [isReady, role, navigate, hideBackButton, hideMainButton]);
+
+    // Проверяем существующую роль
+    const checkRole = async () => {
+      try {
+        const http = createHttp();
+        const profile = await http<{ role?: Role }>('/profile');
+        if (profile?.role) {
+          setRole(profile.role);
+          const nextRoute = profile.role === 'passenger' ? '/passenger' : '/driver';
+          navigate(nextRoute);
+        }
+      } catch (error) {
+        console.error('Error checking role:', error);
+      }
+    };
+
+    checkRole();
+  }, [isReady, navigate, hideBackButton, hideMainButton, setRole]);
 
   const handleRoleSelect = async (role: Role) => {
     console.log('Selecting role:', role);
