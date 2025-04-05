@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useSocket } from '@/shared/api/socket'
+import { useSocket } from '@/app/providers/SocketProvider'
 import { useTelegram } from '@/app/providers/TelegramProvider'
 import { Message } from './ui/Message'
 import { MessageInput } from './ui/MessageInput'
