@@ -10,7 +10,7 @@ export const RequestsListPage = () => {
   const { socket } = useSocket();
   const setActiveOrders = useOrderStore((state) => state.setActiveOrders);
 
-  const { data: orders, isLoading } = useQuery({
+  const { data: orders, isLoading } = useQuery<Order[]>({
     queryKey: ['orders', 'pending'],
     queryFn: () => api.getOrders('pending'),
   });
@@ -28,9 +28,9 @@ export const RequestsListPage = () => {
       if (!orders) return;
       
       setActiveOrders(
-        orders.map((order) =>
+        orders.map((order: Order) =>
           order.id === updatedOrder.id ? updatedOrder : order
-        ).filter((order) => order.status === 'pending')
+        ).filter((order: Order) => order.status === 'pending')
       );
     });
 
@@ -57,7 +57,7 @@ export const RequestsListPage = () => {
       <h1 className="text-xl font-bold">Доступные заказы</h1>
       
       <div className="space-y-4">
-        {orders.map((order) => (
+        {orders.map((order: Order) => (
           <RequestCard
             key={order.id}
             order={order}

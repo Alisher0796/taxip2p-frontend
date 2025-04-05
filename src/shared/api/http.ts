@@ -1,5 +1,5 @@
 import { useTelegram } from '@/app/providers/TelegramProvider';
-import type { OrderStatus } from '@/shared/types/api';
+import type { Order, OrderStatus } from '@/shared/types/api';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -72,22 +72,22 @@ const http = createHttp();
 
 export const api = {
   // Профиль
-  getProfile: () => http('/profile'),
-  updateProfile: (data: UpdateProfileDTO) => http('/profile', { method: 'PUT', body: data }),
+  getProfile: () => http<{ role: 'driver' | 'passenger' | null }>('/profile'),
+  updateProfile: (data: UpdateProfileDTO) => http<{ role: 'driver' | 'passenger' }>('/profile', { method: 'PUT', body: data }),
 
   // Заказы
-  getOrders: (status?: OrderStatus) => http(`/orders${status ? `?status=${status}` : ''}`),
-  getOrder: (id: string) => http(`/orders/${id}`),
-  createOrder: (data: CreateOrderDTO) => http('/orders', { method: 'POST', body: data }),
-  updateOrder: (id: string, data: UpdateOrderDTO) => http(`/orders/${id}`, { method: 'PUT', body: data }),
+  getOrders: (status?: OrderStatus) => http<Order[]>(`/orders${status ? `?status=${status}` : ''}`),
+  getOrder: (id: string) => http<Order>(`/orders/${id}`),
+  createOrder: (data: CreateOrderDTO) => http<Order>('/orders', { method: 'POST', body: data }),
+  updateOrder: (id: string, data: UpdateOrderDTO) => http<Order>(`/orders/${id}`, { method: 'PUT', body: data }),
 
   // Предложения цены
-  createOffer: (data: CreateOfferDTO) => http('/offers', { method: 'POST', body: data }),
+  createOffer: (data: CreateOfferDTO) => http<{ id: string }>('/offers', { method: 'POST', body: data }),
   updateOffer: (id: string, data: { status: 'accepted' | 'rejected' }) =>
-    http(`/offers/${id}`, { method: 'PUT', body: data }),
+    http<{ status: 'accepted' | 'rejected' }>(`/offers/${id}`, { method: 'PUT', body: data }),
 
   // Чат
-  getMessages: (orderId: string) => http(`/orders/${orderId}/messages`),
+  getMessages: (orderId: string) => http<{ id: string; text: string; createdAt: string }[]>(`/orders/${orderId}/messages`),
   sendMessage: (orderId: string, text: string) =>
-    http(`/orders/${orderId}/messages`, { method: 'POST', body: { text } }),
+    http<{ id: string; text: string; createdAt: string }>(`/orders/${orderId}/messages`, { method: 'POST', body: { text } }),
 } as const;
