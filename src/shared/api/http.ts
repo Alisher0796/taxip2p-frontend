@@ -32,7 +32,7 @@ export const createHttp = () => {
     }
 
     // Добавляем initData в заголовки
-    requestHeaders['X-Telegram-Init-Data'] = WebApp.initData;
+    requestHeaders['X-Telegram-Init-Data'] = decodeURIComponent(WebApp.initData);
 
     const response = await fetch(`${API_URL}${endpoint}`, {
       method,
