@@ -1,9 +1,19 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import WebApp from '@twa-dev/sdk'
+
+// Получаем доступ к глобальному объекту Telegram WebApp
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: any
+    }
+  }
+}
+
+
 
 interface TelegramContextType {
-  webApp: typeof WebApp | null
-  user: typeof WebApp['initDataUnsafe']['user'] | null
+  webApp: any | null
+  user: any | null
   isReady: boolean
   haptic: {
     impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void
@@ -26,28 +36,30 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
     const initWebApp = async () => {
       try {
         // Проверяем, что WebApp доступен
-        if (typeof WebApp === 'undefined') {
+        if (!window.Telegram?.WebApp) {
           console.warn('Telegram WebApp SDK not available')
           return false;
         }
 
+        const webApp = window.Telegram.WebApp;
+
         // На iOS иногда требуется время для инициализации
-        if (!WebApp.initData) {
+        if (!webApp.initData) {
           console.log('Waiting for WebApp initialization...');
           return false;
         }
 
         // Логируем информацию о WebApp
-        console.log('WebApp:', WebApp);
-        console.log('WebApp init data:', WebApp.initData);
-        console.log('WebApp init data unsafe:', WebApp.initDataUnsafe);
-        console.log('WebApp user:', WebApp.initDataUnsafe.user);
-        console.log('WebApp platform:', WebApp.platform);
-        console.log('WebApp version:', WebApp.version);
+        console.log('WebApp:', webApp);
+        console.log('WebApp init data:', webApp.initData);
+        console.log('WebApp init data unsafe:', webApp.initDataUnsafe);
+        console.log('WebApp user:', webApp.initDataUnsafe.user);
+        console.log('WebApp platform:', webApp.platform);
+        console.log('WebApp version:', webApp.version);
 
         // Сообщаем о готовности и разворачиваем окно
-        WebApp.ready();
-        WebApp.expand();
+        webApp.ready();
+        webApp.expand();
         
         return true;
       } catch (error) {
@@ -84,8 +96,8 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
       }
 
       try {
-        if (typeof WebApp !== 'undefined') {
-          WebApp.close();
+        if (window.Telegram?.WebApp) {
+          window.Telegram.WebApp.close();
         }
       } catch (error) {
         console.warn('Error closing Telegram WebApp:', error);
@@ -95,26 +107,20 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
 
   const haptic = {
     impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
-      WebApp.HapticFeedback.impactOccurred(style)
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred(style);
+      }
     },
     notification: (type: 'error' | 'success' | 'warning') => {
-      switch (type) {
-        case 'error':
-          WebApp.HapticFeedback.notificationOccurred('error')
-          break
-        case 'success':
-          WebApp.HapticFeedback.notificationOccurred('success')
-          break
-        case 'warning':
-          WebApp.HapticFeedback.notificationOccurred('warning')
-          break
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred(type);
       }
     }
   }
 
   const value = {
-    webApp: isWebAppReady ? WebApp : null,
-    user: isWebAppReady ? WebApp.initDataUnsafe.user : null,
+    webApp: isWebAppReady && window.Telegram?.WebApp ? window.Telegram.WebApp : null,
+    user: isWebAppReady && window.Telegram?.WebApp ? window.Telegram.WebApp.initDataUnsafe.user : null,
     isReady: isWebAppReady,
     haptic
   }
