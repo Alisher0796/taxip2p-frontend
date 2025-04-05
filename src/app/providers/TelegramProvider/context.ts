@@ -8,6 +8,7 @@ export interface TelegramContextType {
     impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void
     notification: (type: 'error' | 'success' | 'warning') => void
   }
+  isReady: boolean
 }
 
 export const TelegramContext = createContext<TelegramContextType | null>(null)

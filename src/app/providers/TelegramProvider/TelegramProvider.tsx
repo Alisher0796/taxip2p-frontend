@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import WebApp from '@twa-dev/sdk'
 import { TelegramContext } from './context'
 
@@ -7,16 +7,21 @@ interface TelegramProviderProps {
 }
 
 export function TelegramProvider({ children }: TelegramProviderProps) {
+  const [isReady, setIsReady] = useState(false)
+
   useEffect(() => {
-    // Инициализация Telegram WebApp
-    WebApp.ready()
-    WebApp.expand()
+    if (!isReady) {
+      // Инициализация Telegram WebApp
+      WebApp.ready()
+      WebApp.expand()
+      setIsReady(true)
+    }
 
     // Очистка при размонтировании
     return () => {
       WebApp.close()
     }
-  }, [])
+  }, [isReady])
 
   const haptic = {
     impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
@@ -30,7 +35,8 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
   const value = {
     webApp: WebApp,
     user: WebApp.initDataUnsafe.user,
-    haptic
+    haptic,
+    isReady
   }
 
   return (
