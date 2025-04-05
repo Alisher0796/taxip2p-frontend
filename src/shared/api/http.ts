@@ -32,7 +32,13 @@ export const createHttp = () => {
     }
 
     // Добавляем initData в заголовки
-    requestHeaders['X-Telegram-Init-Data'] = decodeURIComponent(WebApp.initData);
+    try {
+      requestHeaders['X-Telegram-Init-Data'] = WebApp.initData;
+      console.log('InitData:', WebApp.initData);
+    } catch (error) {
+      console.error('Error getting initData:', error);
+      throw new Error('Ошибка авторизации Telegram');
+    }
 
     const response = await fetch(`${API_URL}${endpoint}`, {
       method,
