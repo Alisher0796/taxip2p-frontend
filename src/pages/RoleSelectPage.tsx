@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/ui/Button/Button';
 import { useUserStore } from '@/entities/user/model/store';
 import { Role } from '@/shared/types/common';
-import { api } from '@/shared/api/http';
+import { createHttp } from '@/shared/api/http';
 
 const RoleSelectPage = () => {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ const RoleSelectPage = () => {
     console.log('Selecting role:', role);
     try {
       console.log('Sending request to update profile...');
-      const updatedProfile = await api.updateProfile({ role });
+      const updatedProfile = await createHttp()('/profile', { method: 'PUT', body: { role } });
       console.log('Profile updated:', updatedProfile);
       
       console.log('Setting role in store...');

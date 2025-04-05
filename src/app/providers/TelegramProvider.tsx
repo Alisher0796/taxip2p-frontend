@@ -4,6 +4,7 @@ import WebApp from '@twa-dev/sdk'
 interface TelegramContextType {
   webApp: typeof WebApp | null
   user: typeof WebApp['initDataUnsafe']['user'] | null
+  isReady: boolean
   haptic: {
     impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void
     notification: (type: 'error' | 'success' | 'warning') => void
@@ -57,6 +58,7 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
   const value = {
     webApp: WebApp,
     user: WebApp.initDataUnsafe.user,
+    isReady: true,
     haptic
   }
 
