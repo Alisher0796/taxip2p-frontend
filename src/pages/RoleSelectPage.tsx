@@ -27,25 +27,13 @@ const RoleSelectPage = () => {
         throw new Error('Приложение доступно только через Telegram');
       }
 
-      // Проверяем наличие данных пользователя
-      if (!webApp.initDataUnsafe?.user) {
-        throw new Error('Ошибка авторизации Telegram');
-      }
-
       // Создаем новый экземпляр HTTP клиента
       const http = createHttp();
       
-      console.log('Sending request to update profile...', {
-        isReady,
-        initData: webApp.initData,
-        user: webApp.initDataUnsafe.user
-      });
+      // Отправляем запрос на обновление профиля
       const updatedProfile = await http<{ role: Role }>('/profile', { 
         method: 'PUT', 
-        body: { role },
-        headers: {
-          'X-Telegram-Init-Data': webApp.initData
-        }
+        body: { role }
       });
       console.log('Profile updated:', updatedProfile);
       

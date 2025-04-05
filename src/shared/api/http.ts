@@ -19,21 +19,25 @@ export const createHttp = () => {
     };
 
     // Проверяем наличие Telegram WebApp
-    if (!WebApp) {
+    if (!window.Telegram?.WebApp) {
+      console.warn('Telegram WebApp is not available');
       throw new Error('Приложение доступно только через Telegram');
     }
 
-    // Получаем initData напрямую из WebApp
+    // Получаем initData из WebApp
     const initData = WebApp.initData;
+    const user = WebApp.initDataUnsafe?.user;
     
-    if (!initData) {
-      console.warn('WebApp initData is empty');
-      throw new Error('Приложение доступно только через Telegram');
+    if (!initData || !user) {
+      console.warn('WebApp initData or user is empty', { initData, user });
+      throw new Error('Ошибка авторизации Telegram');
     }
 
-    // Добавляем initData в заголовки
-    requestHeaders['X-Telegram-Init-Data'] = initData;
-    console.log('Sending initData:', initData);
+    // Добавляем initData в заголовки, если они не были добавлены
+    if (!headers['X-Telegram-Init-Data']) {
+      requestHeaders['X-Telegram-Init-Data'] = initData;
+    }
+    console.log('Request:', { endpoint, method, initData, user });
 
     const response = await fetch(`${API_URL}${endpoint}`, {
       method,
