@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter } from 'react-router-dom'
+import { HashRouter } from 'react-router-dom'
 import WebApp from '@twa-dev/sdk'
 import { QueryProvider } from './providers/QueryProvider'
 import { SocketProvider } from './providers/SocketProvider'
@@ -32,7 +32,7 @@ export function App() {
   }
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <QueryProvider>
         <SocketProvider>
           <TelegramProvider>
@@ -40,6 +40,6 @@ export function App() {
           </TelegramProvider>
         </SocketProvider>
       </QueryProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
