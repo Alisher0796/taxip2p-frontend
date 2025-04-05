@@ -1,4 +1,4 @@
-import { BrowserRouter } from 'react-router-dom'
+import { HashRouter } from 'react-router-dom'
 import { TelegramProvider } from './providers/TelegramProvider'
 import { QueryProvider } from './providers/QueryProvider'
 import { SocketProvider } from './providers/SocketProvider'
@@ -6,7 +6,7 @@ import { Router } from './Router'
 
 export function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <QueryProvider>
         <SocketProvider>
           <TelegramProvider>
@@ -14,6 +14,6 @@ export function App() {
           </TelegramProvider>
         </SocketProvider>
       </QueryProvider>
-    </BrowserRouter>
+    </HashRouter>
   )
 }

@@ -4,11 +4,20 @@ import { useUserStore } from '@/entities/user/model/store';
 import { Role } from '@/shared/types/common';
 import { createHttp } from '@/shared/api/http';
 import { useTelegram } from '@/app/providers/TelegramProvider';
+import { useEffect } from 'react';
 
 const RoleSelectPage = () => {
   const navigate = useNavigate();
   const setRole = useUserStore((state) => state.setRole);
+  const role = useUserStore((state) => state.role);
   const { isReady, webApp } = useTelegram();
+
+  useEffect(() => {
+    if (isReady && role) {
+      const nextRoute = role === 'passenger' ? '/passenger/create' : '/driver/requests';
+      navigate(nextRoute);
+    }
+  }, [isReady, role, navigate]);
 
   const handleRoleSelect = async (role: Role) => {
     console.log('Selecting role:', role);
@@ -42,10 +51,6 @@ const RoleSelectPage = () => {
       
       console.log('Setting role in store...');
       setRole(role);
-      
-      const nextRoute = role === 'passenger' ? '/passenger/create' : '/driver/requests';
-      console.log('Navigating to:', nextRoute);
-      navigate(nextRoute);
     } catch (error) {
       console.error('Error updating role:', error);
       
