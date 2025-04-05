@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import WebApp from '@twa-dev/sdk';
 import { createOfferSchema } from '../lib/schema';
 import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
-import { useTelegram } from '@/shared/lib/hooks/useTelegram';
+import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider';
 
 interface FormData {
   price: number;
@@ -42,7 +43,9 @@ export const CreateOfferForm = ({
 
   useEffect(() => {
     if (isValid && !isLoading) {
-      showMainButton('Предложить цену', handleSubmit(onSubmit));
+      showMainButton();
+      WebApp.MainButton.setText('Предложить цену');
+      WebApp.MainButton.onClick(handleSubmit(onSubmit));
     } else {
       hideMainButton();
     }

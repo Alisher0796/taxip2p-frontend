@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSocket } from '@/app/providers/SocketProvider'
-import { useTelegram } from '@/app/providers/TelegramProvider'
+import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider'
 import { Message } from './Message'
 import { MessageInput } from './MessageInput'
 import type { Message as MessageType } from './types'

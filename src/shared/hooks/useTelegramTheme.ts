@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useTelegram } from '@/app/providers/TelegramProvider'
+import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider'
 
 export function useTelegramTheme() {
   const { webApp } = useTelegram()

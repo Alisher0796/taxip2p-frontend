@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import WebApp from '@twa-dev/sdk';
 import { createOrderSchema } from '../lib/schema';
 import { Input, Textarea } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button/Button';
-import { useTelegram } from '@/shared/lib/hooks/useTelegram';
+import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider';
 
 type FormData = {
   fromAddress: string;
@@ -35,7 +36,9 @@ export const CreateOrderForm = ({ onSubmit, isLoading }: Props) => {
 
   useEffect(() => {
     if (isValid && !isLoading) {
-      showMainButton('Создать заказ', handleSubmit(onSubmit));
+      showMainButton();
+      WebApp.MainButton.setText('Создать заказ');
+      WebApp.MainButton.onClick(handleSubmit(onSubmit));
     } else {
       hideMainButton();
     }

@@ -1,2 +1,2 @@
-export { TelegramProvider } from './TelegramProvider'
-export { useTelegram } from './hooks/useTelegram'
+export { TelegramProvider, useTelegram, type TelegramProviderProps } from './TelegramProvider'
+export { TelegramContext, type TelegramContextType } from './context'

@@ -1,8 +1,16 @@
-import { ReactNode, useEffect, useState } from 'react'
+import { ReactNode, useContext, useEffect, useState } from 'react'
 import WebApp from '@twa-dev/sdk'
 import { TelegramContext } from './context'
 
-interface TelegramProviderProps {
+export function useTelegram() {
+  const context = useContext(TelegramContext)
+  if (!context) {
+    throw new Error('useTelegram must be used within TelegramProvider')
+  }
+  return context
+}
+
+export interface TelegramProviderProps {
   children: ReactNode
 }
 
@@ -32,11 +40,21 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
     }
   }
 
+  const showMainButton = () => {
+    WebApp.MainButton.show()
+  }
+
+  const hideMainButton = () => {
+    WebApp.MainButton.hide()
+  }
+
   const value = {
     webApp: WebApp,
     user: WebApp.initDataUnsafe.user,
     haptic,
-    isReady
+    isReady,
+    showMainButton,
+    hideMainButton
   }
 
   return (

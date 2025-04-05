@@ -3,7 +3,7 @@ import { Button } from '@/shared/ui/Button/Button';
 import { useUserStore } from '@/entities/user/model/store';
 import { Role } from '@/shared/types/common';
 import { createHttp } from '@/shared/api/http';
-import { useTelegram } from '@/app/providers/TelegramProvider';
+import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider';
 import { useEffect } from 'react';
 
 const RoleSelectPage = () => {

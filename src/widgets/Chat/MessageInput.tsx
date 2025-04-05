@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react'
-import { useTelegram } from '@/app/providers/TelegramProvider'
+import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider'
 import { Button } from '@/shared/ui/Button'
 
 interface MessageInputProps {
