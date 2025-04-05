@@ -10,23 +10,30 @@ type RequestOptions = {
 };
 
 export const createHttp = () => {
-  const { webApp } = useTelegram();
+  let webApp: ReturnType<typeof useTelegram>['webApp'] | null = null;
+  
+  try {
+    const telegram = useTelegram();
+    webApp = telegram.webApp;
+  } catch (error) {
+    console.warn('TelegramProvider not found, running without Telegram WebApp');
+  }
   
   return async <T>(endpoint: string, options: RequestOptions = {}): Promise<T> => {
     const { method = 'GET', body, headers = {} } = options;
 
-    if (!webApp?.initData) {
-      console.error('No Telegram WebApp init data available');
-      throw new Error('Невозможно получить данные Telegram');
+    const requestHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...headers,
+    };
+
+    if (webApp?.initData) {
+      requestHeaders['X-Telegram-Init-Data'] = webApp.initData;
     }
 
     const response = await fetch(`${API_URL}${endpoint}`, {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Telegram-Init-Data': webApp.initData,
-        ...headers,
-      },
+      headers: requestHeaders,
       body: body ? JSON.stringify(body) : undefined,
     });
 
