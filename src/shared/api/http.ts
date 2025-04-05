@@ -23,29 +23,17 @@ export const createHttp = () => {
       throw new Error('Приложение доступно только через Telegram');
     }
 
-    // Проверяем наличие необходимых данных
-    if (!WebApp.initDataUnsafe?.user) {
-      console.warn('WebApp not initialized:', { 
-        initDataUnsafe: WebApp.initDataUnsafe
-      });
+    // Получаем initData напрямую из WebApp
+    const initData = WebApp.initData;
+    
+    if (!initData) {
+      console.warn('WebApp initData is empty');
       throw new Error('Приложение доступно только через Telegram');
     }
 
     // Добавляем initData в заголовки
-    try {
-      // Получаем initData напрямую из WebApp
-      const initData = WebApp.initData;
-      
-      if (!initData) {
-        throw new Error('InitData is empty');
-      }
-
-      requestHeaders['X-Telegram-Init-Data'] = initData;
-      console.log('Sending initData:', initData);
-    } catch (error) {
-      console.error('Error getting initData:', error);
-      throw new Error('Ошибка авторизации Telegram');
-    }
+    requestHeaders['X-Telegram-Init-Data'] = initData;
+    console.log('Sending initData:', initData);
 
     const response = await fetch(`${API_URL}${endpoint}`, {
       method,
