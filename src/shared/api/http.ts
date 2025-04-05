@@ -1,4 +1,3 @@
-import { useTelegram } from '@/app/providers/TelegramProvider';
 import type { Order, OrderStatus } from '@/shared/types/api';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -10,15 +9,6 @@ type RequestOptions = {
 };
 
 export const createHttp = () => {
-  let webApp: ReturnType<typeof useTelegram>['webApp'] | null = null;
-  
-  try {
-    const telegram = useTelegram();
-    webApp = telegram.webApp;
-  } catch (error) {
-    console.warn('TelegramProvider not found, running without Telegram WebApp');
-  }
-  
   return async <T>(endpoint: string, options: RequestOptions = {}): Promise<T> => {
     const { method = 'GET', body, headers = {} } = options;
 
@@ -27,9 +17,22 @@ export const createHttp = () => {
       ...headers,
     };
 
-    if (webApp?.initData) {
-      requestHeaders['X-Telegram-Init-Data'] = webApp.initData;
+    // Проверяем наличие Telegram WebApp
+    if (!window.Telegram?.WebApp) {
+      throw new Error('Приложение доступно только через Telegram');
     }
+
+    // Создаем строку initData из параметров
+    const webApp = window.Telegram.WebApp;
+    const params = new URLSearchParams({
+      auth_date: webApp.initDataUnsafe.auth_date?.toString() || '',
+      query_id: webApp.initDataUnsafe.query_id || '',
+      user: JSON.stringify(webApp.initDataUnsafe.user || {}),
+      hash: webApp.initDataUnsafe.hash || ''
+    });
+
+    // Добавляем initData в заголовки
+    requestHeaders['X-Telegram-Init-Data'] = params.toString();
 
     const response = await fetch(`${API_URL}${endpoint}`, {
       method,
@@ -46,11 +49,7 @@ export const createHttp = () => {
       });
 
       if (response.status === 401) {
-        if (!webApp?.initData) {
-          throw new Error('Приложение доступно только через Telegram');
-        } else {
-          throw new Error('Ошибка авторизации Telegram');
-        }
+        throw new Error('Ошибка авторизации Telegram');
       }
 
       const error = await response.json().catch(() => ({ message: 'Неизвестная ошибка' }));
