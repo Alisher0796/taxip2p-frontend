@@ -22,17 +22,15 @@ export const createHttp = () => {
       throw new Error('Приложение доступно только через Telegram');
     }
 
-    // Создаем строку initData из параметров
+    // Получаем initData напрямую из WebApp
     const webApp = window.Telegram.WebApp;
-    const params = new URLSearchParams({
-      auth_date: webApp.initDataUnsafe.auth_date?.toString() || '',
-      query_id: webApp.initDataUnsafe.query_id || '',
-      user: JSON.stringify(webApp.initDataUnsafe.user || {}),
-      hash: webApp.initDataUnsafe.hash || ''
-    });
+    const initData = webApp.initData;
+    
+    console.log('Using initData:', initData);
+    console.log('InitDataUnsafe:', webApp.initDataUnsafe);
 
     // Добавляем initData в заголовки
-    requestHeaders['X-Telegram-Init-Data'] = params.toString();
+    requestHeaders['X-Telegram-Init-Data'] = initData;
 
     const response = await fetch(`${API_URL}${endpoint}`, {
       method,
