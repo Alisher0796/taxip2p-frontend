@@ -8,7 +8,12 @@ interface SocketProviderProps {
 
 export function SocketProvider({ children }: SocketProviderProps) {
   const [socket] = useState(() =>
-    io(import.meta.env.VITE_API_URL || 'http://localhost:3000')
+    io(import.meta.env.VITE_API_URL || 'http://localhost:3000', {
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 10000
+    })
   )
   const [isConnected, setIsConnected] = useState(socket.connected)
 

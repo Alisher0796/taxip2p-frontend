@@ -18,16 +18,29 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    if (!isReady) {
-      // Инициализация Telegram WebApp
-      WebApp.ready()
-      WebApp.expand()
-      setIsReady(true)
+    try {
+      if (!isReady) {
+        // Проверяем, что приложение запущено в Telegram
+        if (!WebApp.initData) {
+          console.warn('WebApp initData is empty. Make sure the app is running inside Telegram.')
+        }
+
+        // Инициализация Telegram WebApp
+        WebApp.ready()
+        WebApp.expand()
+        setIsReady(true)
+      }
+    } catch (error) {
+      console.error('Error initializing Telegram WebApp:', error)
     }
 
     // Очистка при размонтировании
     return () => {
-      WebApp.close()
+      try {
+        WebApp.close()
+      } catch (error) {
+        console.error('Error closing Telegram WebApp:', error)
+      }
     }
   }, [isReady])
 
