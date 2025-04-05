@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import WebApp from '@twa-dev/sdk'
 
 interface TelegramContextType {
@@ -18,48 +18,80 @@ interface TelegramProviderProps {
 }
 
 export function TelegramProvider({ children }: TelegramProviderProps) {
+  const [isWebAppReady, setIsWebAppReady] = useState(false);
+
   useEffect(() => {
-    // Инициализация Telegram WebApp
-    try {
-      // Проверяем, что WebApp доступен
-      if (typeof WebApp === 'undefined') {
-        console.warn('Telegram WebApp SDK not available, running in standalone mode')
-        return
+    let initTimeout: NodeJS.Timeout;
+
+    const initWebApp = async () => {
+      try {
+        // Проверяем, что WebApp доступен
+        if (typeof WebApp === 'undefined') {
+          console.warn('Telegram WebApp SDK not available')
+          return false;
+        }
+
+        // На iOS иногда требуется время для инициализации
+        if (!WebApp.initData) {
+          console.log('Waiting for WebApp initialization...');
+          return false;
+        }
+
+        // Логируем информацию о WebApp
+        console.log('WebApp:', WebApp);
+        console.log('WebApp init data:', WebApp.initData);
+        console.log('WebApp init data unsafe:', WebApp.initDataUnsafe);
+        console.log('WebApp user:', WebApp.initDataUnsafe.user);
+        console.log('WebApp platform:', WebApp.platform);
+        console.log('WebApp version:', WebApp.version);
+
+        // Сообщаем о готовности и разворачиваем окно
+        WebApp.ready();
+        WebApp.expand();
+        
+        return true;
+      } catch (error) {
+        console.warn('Error initializing Telegram WebApp:', error);
+        return false;
+      }
+    };
+
+    // Пытаемся инициализировать WebApp каждые 100мс в течение 3 секунд
+    let attempts = 0;
+    const maxAttempts = 30; // 3 секунды
+
+    const tryInit = async () => {
+      if (attempts >= maxAttempts) {
+        console.error('Failed to initialize Telegram WebApp after multiple attempts');
+        return;
       }
 
-      // Проверяем наличие данных инициализации
-      if (!WebApp.initData) {
-        console.warn('No WebApp init data available, running in standalone mode')
-        return
+      const success = await initWebApp();
+      if (success) {
+        setIsWebAppReady(true);
+      } else {
+        attempts++;
+        initTimeout = setTimeout(tryInit, 100);
       }
+    };
 
-      // Логируем информацию о WebApp
-      console.log('WebApp:', WebApp)
-      console.log('WebApp init data:', WebApp.initData)
-      console.log('WebApp init data unsafe:', WebApp.initDataUnsafe)
-      console.log('WebApp user:', WebApp.initDataUnsafe.user)
-      console.log('WebApp platform:', WebApp.platform)
-      console.log('WebApp version:', WebApp.version)
-
-      // Сообщаем о готовности и разворачиваем окно
-      WebApp.ready()
-      WebApp.expand()
-    } catch (error) {
-      console.warn('Error initializing Telegram WebApp:', error)
-      console.warn('Running in standalone mode')
-    }
+    tryInit();
 
     // Очистка при размонтировании
     return () => {
+      if (initTimeout) {
+        clearTimeout(initTimeout);
+      }
+
       try {
         if (typeof WebApp !== 'undefined') {
-          WebApp.close()
+          WebApp.close();
         }
       } catch (error) {
-        console.warn('Error closing Telegram WebApp:', error)
+        console.warn('Error closing Telegram WebApp:', error);
       }
-    }
-  }, [])
+    };
+  }, []);
 
   const haptic = {
     impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
@@ -80,13 +112,10 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
     }
   }
 
-  // Проверяем доступность WebApp и данных инициализации
-  const isWebAppAvailable = typeof WebApp !== 'undefined' && !!WebApp.initData;
-
   const value = {
-    webApp: isWebAppAvailable ? WebApp : null,
-    user: isWebAppAvailable ? WebApp.initDataUnsafe.user : null,
-    isReady: isWebAppAvailable,
+    webApp: isWebAppReady ? WebApp : null,
+    user: isWebAppReady ? WebApp.initDataUnsafe.user : null,
+    isReady: isWebAppReady,
     haptic
   }
 
