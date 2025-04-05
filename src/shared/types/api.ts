@@ -1,40 +1,52 @@
-export interface TripRequest {
-  id: number;
-  passengerId: number;
-  fromAddress: string;
-  toAddress: string;
-  desiredPrice: number;
-  pickupTime: 'PT15M' | 'PT30M' | 'PT1H';
-  comment?: string;
-  status: 'active' | 'in_progress' | 'completed' | 'cancelled';
+export type OrderStatus = 'pending' | 'negotiating' | 'accepted' | 'inProgress' | 'completed' | 'cancelled';
+export type OfferStatus = 'pending' | 'accepted' | 'rejected';
+
+export interface User {
+  id: string;
+  username: string;
+  telegramId: string;
+  role: 'driver' | 'passenger' | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface PriceOffer {
-  id: number;
-  tripRequestId: number;
-  driverId: number;
-  price: number;
-  status: 'pending' | 'accepted' | 'rejected';
+export interface Order {
+  id: string;
+  fromAddress: string;
+  toAddress: string;
+  price?: number;
+  finalPrice?: number;
+  status: OrderStatus;
+  comment?: string;
   createdAt: string;
-}
-
-export interface ActiveTrip {
-  id: number;
-  requestId: number;
-  passengerId: number;
-  driverId: number;
-  finalPrice: number;
-  status: 'active' | 'completed';
-  startedAt: string;
+  updatedAt: string;
+  startedAt?: string;
   completedAt?: string;
+  passenger: User;
+  driver?: User;
+  offers: PriceOffer[];
+  messages: Message[];
 }
 
-export interface ChatMessage {
-  id: number;
-  tripId: number;
-  senderId: number;
-  content: string;
+export interface PriceOffer {
+  id: string;
+  price: number;
+  status: OfferStatus;
   createdAt: string;
+  updatedAt: string;
+  order: Order;
+  orderId: string;
+  driver: User;
+  driverId: string;
+}
+
+export interface Message {
+  id: string;
+  text: string;
+  createdAt: string;
+  updatedAt: string;
+  order: Order;
+  orderId: string;
+  sender: User;
+  senderId: string;
 }

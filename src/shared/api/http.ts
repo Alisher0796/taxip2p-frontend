@@ -1,5 +1,5 @@
 import WebApp from '@twa-dev/sdk';
-import { TripRequest, PriceOffer } from '@/shared/types/api';
+import { Order, PriceOffer, User, OrderStatus, Message } from '@/shared/types/api';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -30,24 +30,46 @@ export const http = async <T>(endpoint: string, options: RequestOptions = {}): P
   return response.json();
 };
 
-type CreateTripRequestDTO = Omit<TripRequest, 'id' | 'status' | 'passengerId' | 'createdAt' | 'updatedAt'>;
-type CreatePriceOfferDTO = Omit<PriceOffer, 'id' | 'status' | 'createdAt'>;
+export interface CreateOrderDTO {
+  fromAddress: string;
+  toAddress: string;
+  price?: number;
+  comment?: string;
+}
+
+interface CreateOfferDTO {
+  orderId: string;
+  price: number;
+}
+
+interface UpdateOrderDTO {
+  status?: OrderStatus;
+  finalPrice?: number;
+  driverId?: string;
+}
+
+interface UpdateProfileDTO {
+  role: 'driver' | 'passenger';
+}
 
 export const api = {
-  // Заявки
-  getTripRequests: () => http<TripRequest[]>('/trip-requests'),
-  createTripRequest: (data: CreateTripRequestDTO) =>
-    http<TripRequest>('/trip-requests', { method: 'POST', body: data }),
-  updateTripRequest: (id: number, data: Partial<TripRequest>) =>
-    http<TripRequest>(`/trip-requests/${id}`, { method: 'PUT', body: data }),
+  // Профиль
+  getProfile: () => http<User>('/profile'),
+  updateProfile: (data: UpdateProfileDTO) => http<User>('/profile', { method: 'PUT', body: data }),
+
+  // Заказы
+  getOrders: (status?: OrderStatus) => http<Order[]>(`/orders${status ? `?status=${status}` : ''}`),
+  getOrder: (id: string) => http<Order>(`/orders/${id}`),
+  createOrder: (data: CreateOrderDTO) => http<Order>('/orders', { method: 'POST', body: data }),
+  updateOrder: (id: string, data: UpdateOrderDTO) => http<Order>(`/orders/${id}`, { method: 'PUT', body: data }),
 
   // Предложения цены
-  createPriceOffer: (data: CreatePriceOfferDTO) =>
-    http<PriceOffer>('/price-offers', { method: 'POST', body: data }),
-  updatePriceOffer: (id: number, data: Partial<PriceOffer>) =>
-    http<PriceOffer>(`/price-offers/${id}`, { method: 'PUT', body: data }),
+  createOffer: (data: CreateOfferDTO) => http<PriceOffer>('/offers', { method: 'POST', body: data }),
+  updateOffer: (id: string, data: { status: 'accepted' | 'rejected' }) =>
+    http<PriceOffer>(`/offers/${id}`, { method: 'PUT', body: data }),
 
-  // Профиль водителя
-  updateDriverProfile: (data: { carModel: string; licensePlate: string }) =>
-    http<{ success: boolean }>('/driver/profile', { method: 'PUT', body: data }),
+  // Чат
+  getMessages: (orderId: string) => http<Message[]>(`/orders/${orderId}/messages`),
+  sendMessage: (orderId: string, text: string) =>
+    http<Message>(`/orders/${orderId}/messages`, { method: 'POST', body: { text } }),
 };

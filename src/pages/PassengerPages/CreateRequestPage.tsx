@@ -1,33 +1,23 @@
 import { useNavigate } from 'react-router-dom';
-import { CreateTripRequestForm } from '@/features/trip-request/ui/CreateTripRequestForm';
-import { useTripRequestStore } from '@/features/trip-request/model/store';
-import { useUserStore } from '@/entities/user/model/store';
-import { TripRequest } from '@/shared/types/common';
+import { CreateOrderForm } from '@/features/order/ui/CreateOrderForm';
+import { useOrderStore } from '@/features/order/model/store';
+import { Order } from '@/shared/types/api';
+import { api } from '@/shared/api/http';
 
 export const CreateRequestPage = () => {
   const navigate = useNavigate();
-  const user = useUserStore((state) => state.user);
-  const setCurrentRequest = useTripRequestStore((state) => state.setCurrentRequest);
+  const setCurrentOrder = useOrderStore((state) => state.setCurrentOrder);
 
-  const handleSubmit = async (data: Omit<TripRequest, 'id' | 'status' | 'passengerId' | 'createdAt' | 'updatedAt'>) => {
+  const handleSubmit = async (data: Omit<Order, 'id' | 'status' | 'passenger' | 'driver' | 'offers' | 'messages' | 'createdAt' | 'updatedAt'>) => {
     try {
-      // TODO: Заменить на реальный API запрос
-      const response = await fetch('/api/trip-requests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...data,
-          passengerId: user?.id,
-        }),
+      const order = await api.createOrder({
+        ...data
       });
 
-      const newRequest = await response.json();
-      setCurrentRequest(newRequest);
+      setCurrentOrder(order);
       navigate('/passenger/active');
     } catch (error) {
-      console.error('Failed to create request:', error);
+      console.error('Failed to create order:', error);
       // TODO: Показать ошибку пользователю
     }
   };
@@ -35,7 +25,7 @@ export const CreateRequestPage = () => {
   return (
     <div className="container mx-auto max-w-md">
       <h1 className="mb-6 text-xl font-bold">Создание заявки</h1>
-      <CreateTripRequestForm onSubmit={handleSubmit} />
+      <CreateOrderForm onSubmit={handleSubmit} />
     </div>
   );
 };

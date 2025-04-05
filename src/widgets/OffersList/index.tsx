@@ -1,13 +1,13 @@
 import { formatDistance } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { PriceOffer } from '@/shared/types/common';
+import type { PriceOffer } from '@/shared/types/api';
 import { Button } from '@/shared/ui/Button/Button';
 import { cn } from '@/shared/lib/cn';
 
 interface Props {
   offers: PriceOffer[];
-  onAccept?: (offerId: number) => void;
-  onReject?: (offerId: number) => void;
+  onAccept?: (offerId: string) => void;
+  onReject?: (offerId: string) => void;
   showActions?: boolean;
 }
 

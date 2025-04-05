@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { priceOfferSchema } from '@/features/trip-request/lib/schema';
+import { createOfferSchema } from '../lib/schema';
 import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
 import { useTelegram } from '@/shared/lib/hooks/useTelegram';
@@ -31,7 +31,7 @@ export const CreateOfferForm = ({
     formState: { errors, isValid },
     watch,
   } = useForm<FormData>({
-    resolver: zodResolver(priceOfferSchema),
+    resolver: zodResolver(createOfferSchema),
     mode: 'onChange',
     defaultValues: {
       price: currentPrice,
@@ -41,14 +41,14 @@ export const CreateOfferForm = ({
   const formValues = watch();
 
   useEffect(() => {
-    if (isValid) {
+    if (isValid && !isLoading) {
       showMainButton('Предложить цену', handleSubmit(onSubmit));
     } else {
       hideMainButton();
     }
     
     return () => hideMainButton();
-  }, [isValid, formValues, showMainButton, hideMainButton, handleSubmit, onSubmit]);
+  }, [isValid, formValues, showMainButton, hideMainButton, handleSubmit, onSubmit, isLoading]);
 
   return (
     <form className="space-y-4 p-4" onSubmit={handleSubmit(onSubmit)}>
@@ -75,7 +75,16 @@ export const CreateOfferForm = ({
         >
           Отмена
         </Button>
+        <Button
+          type="submit"
+          className="flex-1"
+          disabled={!isValid || isLoading}
+        >
+          Предложить
+        </Button>
       </div>
     </form>
   );
 };
+
+CreateOfferForm.displayName = 'CreateOfferForm';
