@@ -45,8 +45,8 @@ export interface Message {
   text: string;
   createdAt: string;
   updatedAt: string;
-  order: Order;
-  orderId: string;
+  order?: Order;
+  orderId?: string;
   sender: User;
-  senderId: string;
+  senderId?: string;
 }

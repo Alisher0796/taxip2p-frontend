@@ -11,6 +11,8 @@ export interface TelegramContextType {
   isReady: boolean
   showMainButton: () => void
   hideMainButton: () => void
+  showBackButton: () => void
+  hideBackButton: () => void
 }
 
 export const TelegramContext = createContext<TelegramContextType | null>(null)

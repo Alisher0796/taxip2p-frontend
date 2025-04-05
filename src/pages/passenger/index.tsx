@@ -5,17 +5,24 @@ import { CreateOrderForm } from '@/features/order/ui/CreateOrderForm';
 import { useOrderStore } from '@/features/order/model/store';
 import { api } from '@/shared/api/http';
 import type { CreateOrderDTO } from '@/shared/api/http';
+import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider';
 
 export default function PassengerPage() {
   const navigate = useNavigate();
   const user = useUserStore((state) => state.user);
   const setCurrentOrder = useOrderStore((state) => state.setCurrentOrder);
 
+  const { showBackButton, hideMainButton } = useTelegram();
+
   useEffect(() => {
     if (!user || user.role !== 'passenger') {
       navigate('/');
+      return;
     }
-  }, [user, navigate]);
+
+    showBackButton();
+    hideMainButton();
+  }, [user, navigate, showBackButton, hideMainButton]);
 
   const handleSubmit = async (data: CreateOrderDTO) => {
     try {

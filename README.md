@@ -1,49 +1,71 @@
-# Telegram Mini App
+# TaxiP2P Frontend
 
-A production-ready React application built with Vite and TailwindCSS, designed to work as a Telegram Mini App.
+## Описание
 
-## Features
+TaxiP2P - это Telegram мини-приложение для поиска попутчиков и водителей. Приложение позволяет пользователям создавать заказы на поездки и предлагать свои услуги в качестве водителя.
 
-- 🚀 React + Vite + TypeScript
-- 🎨 TailwindCSS for styling
-- 📱 Telegram WebApp SDK integration
-- 🛣️ React Router for navigation
-- 🎯 Feature-Sliced Design architecture
-- 🌙 Dark mode support
-- 🔧 Fully typed components
-- 📦 Zero runtime dependencies
+## Технологии
 
-## Getting Started
+- React + TypeScript
+- Vite
+- React Router
+- React Query
+- Socket.IO
+- Telegram WebApp SDK
+- TailwindCSS
+- Zustand
+- React Hook Form + Zod
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-4. Build for production:
-   ```bash
-   npm run build
-   ```
+## Установка
 
-## Project Structure
+1. Клонируйте репозиторий:
+```bash
+git clone https://github.com/Alisher0796/taxip2p-frontend.git
+cd taxip2p-frontend
+```
+
+2. Установите зависимости:
+```bash
+npm install
+```
+
+3. Создайте файл .env и укажите необходимые переменные:
+```env
+VITE_API_URL=https://backend-production-d89d.up.railway.app/api
+VITE_SOCKET_URL=https://backend-production-d89d.up.railway.app
+```
+
+## Разработка
+
+Запуск в режиме разработки:
+```bash
+npm run dev
+```
+
+## Сборка
+
+Сборка проекта:
+```bash
+npm run build
+```
+
+## Деплой
+
+Деплой на Vercel:
+```bash
+npm run deploy
+```
+
+## Структура проекта
 
 ```
 src/
-├── app/               # Application initialization layer
-│   ├── providers/     # Application providers
-│   └── styles/        # Global styles
-├── pages/             # Application pages
-├── widgets/           # Complex page sections
-├── features/          # User interactions
-├── entities/          # Business entities
-└── shared/           # Shared modules
-    ├── api/          # API interaction
-    ├── lib/          # Utility functions
-    └── ui/           # UI components
+├── app/           # Конфигурация приложения
+├── entities/      # Бизнес-сущности
+├── features/      # Функциональные модули
+├── pages/         # Страницы
+├── shared/        # Общие компоненты и утилиты
+├── widgets/       # Составные компоненты
 ```
 
 ## Development

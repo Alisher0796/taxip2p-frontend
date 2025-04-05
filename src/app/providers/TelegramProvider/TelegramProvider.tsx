@@ -48,10 +48,15 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
       clearTimeout(timer)
       try {
         if (window.Telegram?.WebApp) {
+          // Убираем кнопку и очищаем обработчики
+          WebApp.MainButton.hide()
+          WebApp.MainButton.offClick(() => {})
+          WebApp.BackButton.hide()
+          WebApp.BackButton.offClick(() => {})
           WebApp.close()
         }
       } catch (error) {
-        console.error('Error closing Telegram WebApp:', error)
+        console.error('Error cleaning up WebApp:', error)
       }
     }
   }, [])
@@ -65,13 +70,10 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
     }
   }
 
-  const showMainButton = () => {
-    WebApp.MainButton.show()
-  }
-
-  const hideMainButton = () => {
-    WebApp.MainButton.hide()
-  }
+  const showMainButton = () => WebApp.MainButton.show()
+  const hideMainButton = () => WebApp.MainButton.hide()
+  const showBackButton = () => WebApp.BackButton.show()
+  const hideBackButton = () => WebApp.BackButton.hide()
 
   const value = {
     webApp: WebApp,
@@ -79,7 +81,9 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
     haptic,
     isReady,
     showMainButton,
-    hideMainButton
+    hideMainButton,
+    showBackButton,
+    hideBackButton
   }
 
   return (

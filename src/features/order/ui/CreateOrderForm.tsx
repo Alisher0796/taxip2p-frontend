@@ -20,7 +20,7 @@ interface Props {
 }
 
 export const CreateOrderForm = ({ onSubmit, isLoading }: Props) => {
-  const { showMainButton, hideMainButton } = useTelegram();
+  const { showMainButton, hideMainButton, haptic } = useTelegram();
   
   const {
     register,
@@ -38,12 +38,32 @@ export const CreateOrderForm = ({ onSubmit, isLoading }: Props) => {
     if (isValid && !isLoading) {
       showMainButton();
       WebApp.MainButton.setText('Создать заказ');
-      WebApp.MainButton.onClick(handleSubmit(onSubmit));
+      const handleClick = handleSubmit(async (data) => {
+        try {
+          WebApp.MainButton.showProgress();
+          await onSubmit(data);
+          haptic.notification('success');
+        } catch (error) {
+          console.error('Failed to submit form:', error);
+          WebApp.showPopup({
+            title: 'Ошибка',
+            message: 'Не удалось создать заказ. Попробуйте еще раз.',
+            buttons: [{ type: 'ok' }]
+          });
+          haptic.notification('error');
+        } finally {
+          WebApp.MainButton.hideProgress();
+        }
+      });
+      WebApp.MainButton.onClick(handleClick);
     } else {
       hideMainButton();
     }
     
-    return () => hideMainButton();
+    return () => {
+      hideMainButton();
+      WebApp.MainButton.offClick(() => {});
+    };
   }, [isValid, formValues, showMainButton, hideMainButton, handleSubmit, onSubmit, isLoading]);
 
   return (

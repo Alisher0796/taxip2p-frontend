@@ -5,10 +5,17 @@ import { RequestCard } from '@/widgets/RequestCard';
 import { useOrderStore } from '@/features/order/model/store';
 import { useSocket } from '@/app/providers/SocketProvider';
 import { Order, OrderStatus } from '@/shared/types/api';
+import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider';
 
 export const RequestsListPage = () => {
   const { socket } = useSocket();
   const setActiveOrders = useOrderStore((state) => state.setActiveOrders);
+  const { showBackButton, hideMainButton, haptic } = useTelegram();
+
+  useEffect(() => {
+    showBackButton();
+    hideMainButton();
+  }, [showBackButton, hideMainButton]);
 
   const { data: orders, isLoading } = useQuery<Order[]>({
     queryKey: ['orders', 'pending'],
@@ -21,6 +28,7 @@ export const RequestsListPage = () => {
     socket.on('order:new', (order: Order) => {
       if (order.status === 'pending') {
         setActiveOrders([...(orders || []), order]);
+        haptic.notification('success');
       }
     });
 
@@ -32,6 +40,8 @@ export const RequestsListPage = () => {
           order.id === updatedOrder.id ? updatedOrder : order
         ).filter((order: Order) => order.status === 'pending')
       );
+
+      haptic.notification('success');
     });
 
     return () => {

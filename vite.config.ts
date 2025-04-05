@@ -13,6 +13,20 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    cors: true,
+    proxy: {
+      '/api': {
+        target: 'https://backend-production-d89d.up.railway.app',
+        changeOrigin: true,
+        secure: false
+      },
+      '/socket.io': {
+        target: 'https://backend-production-d89d.up.railway.app',
+        changeOrigin: true,
+        secure: false,
+        ws: true
+      }
+    }
   },
   build: {
     // Оптимизация сборки

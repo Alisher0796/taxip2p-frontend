@@ -10,14 +10,17 @@ const RoleSelectPage = () => {
   const navigate = useNavigate();
   const setRole = useUserStore((state) => state.setRole);
   const role = useUserStore((state) => state.role);
-  const { isReady, webApp } = useTelegram();
+  const { isReady, webApp, hideBackButton, hideMainButton, haptic } = useTelegram();
 
   useEffect(() => {
     if (isReady && role) {
       const nextRoute = role === 'passenger' ? '/passenger/create' : '/driver/requests';
       navigate(nextRoute);
     }
-  }, [isReady, role, navigate]);
+
+    hideBackButton();
+    hideMainButton();
+  }, [isReady, role, navigate, hideBackButton, hideMainButton]);
 
   const handleRoleSelect = async (role: Role) => {
     console.log('Selecting role:', role);
@@ -39,12 +42,18 @@ const RoleSelectPage = () => {
       
       console.log('Setting role in store...');
       setRole(role);
+      haptic.notification('success');
     } catch (error) {
       console.error('Error updating role:', error);
       
       // Показываем ошибку пользователю
       if (error instanceof Error) {
-        alert(error.message);
+        webApp?.showPopup({
+          title: 'Ошибка',
+          message: error.message,
+          buttons: [{ type: 'ok' }]
+        });
+        haptic.notification('error');
         
         // Если ошибка связана с Telegram, перенаправляем на телеграм-бота
         if (error.message.includes('Telegram')) {
