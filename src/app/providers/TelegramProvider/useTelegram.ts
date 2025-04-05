@@ -10,7 +10,8 @@ const fallbackContext: TelegramContextType = {
   haptic: {
     impact: () => {},
     notification: () => {}
-  }
+  },
+  isReady: false
 }
 
 export function useTelegram() {
@@ -33,7 +34,8 @@ export function useTelegram() {
           notification: (type: 'error' | 'success' | 'warning') => {
             WebApp.HapticFeedback.notificationOccurred(type)
           }
-        }
+        },
+        isReady: true
       }
     } catch (e) {
       console.warn('useTelegram: WebApp не инициализирован, используются fallback значения')
