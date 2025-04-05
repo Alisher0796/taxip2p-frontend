@@ -3,18 +3,34 @@ import { Button } from '@/shared/ui/Button/Button';
 import { useUserStore } from '@/entities/user/model/store';
 import { Role } from '@/shared/types/common';
 import { createHttp } from '@/shared/api/http';
+import { useTelegram } from '@/app/providers/TelegramProvider';
 
 const RoleSelectPage = () => {
   const navigate = useNavigate();
   const setRole = useUserStore((state) => state.setRole);
+  const { isReady, webApp } = useTelegram();
 
   const handleRoleSelect = async (role: Role) => {
     console.log('Selecting role:', role);
     try {
+      // Проверяем готовность WebApp
+      if (!isReady || !webApp) {
+        throw new Error('Приложение доступно только через Telegram');
+      }
+
+      // Проверяем наличие данных пользователя
+      if (!webApp.initDataUnsafe?.user) {
+        throw new Error('Ошибка авторизации Telegram');
+      }
+
       // Создаем новый экземпляр HTTP клиента
       const http = createHttp();
       
-      console.log('Sending request to update profile...');
+      console.log('Sending request to update profile...', {
+        isReady,
+        initData: webApp.initData,
+        user: webApp.initDataUnsafe.user
+      });
       const updatedProfile = await http<{ role: Role }>('/profile', { method: 'PUT', body: { role } });
       console.log('Profile updated:', updatedProfile);
       
