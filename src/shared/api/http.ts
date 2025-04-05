@@ -45,6 +45,14 @@ export const createHttp = () => {
         headers: Object.fromEntries(response.headers.entries())
       });
 
+      if (response.status === 401) {
+        if (!webApp?.initData) {
+          throw new Error('Приложение доступно только через Telegram');
+        } else {
+          throw new Error('Ошибка авторизации Telegram');
+        }
+      }
+
       const error = await response.json().catch(() => ({ message: 'Неизвестная ошибка' }));
       throw new Error(error.message || 'Что-то пошло не так');
     }

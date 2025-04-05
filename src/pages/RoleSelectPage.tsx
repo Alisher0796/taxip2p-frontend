@@ -15,7 +15,7 @@ const RoleSelectPage = () => {
       const http = createHttp();
       
       console.log('Sending request to update profile...');
-      const updatedProfile = await http('/profile', { method: 'PUT', body: { role } });
+      const updatedProfile = await http<{ role: Role }>('/profile', { method: 'PUT', body: { role } });
       console.log('Profile updated:', updatedProfile);
       
       console.log('Setting role in store...');
@@ -30,6 +30,11 @@ const RoleSelectPage = () => {
       // Показываем ошибку пользователю
       if (error instanceof Error) {
         alert(error.message);
+        
+        // Если ошибка связана с Telegram, перенаправляем на телеграм-бота
+        if (error.message.includes('Telegram')) {
+          window.location.href = 'https://t.me/taxip2p_bot';
+        }
       } else {
         alert('Произошла ошибка при выборе роли');
       }
