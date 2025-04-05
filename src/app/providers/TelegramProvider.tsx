@@ -29,6 +29,8 @@ interface TelegramProviderProps {
 
 export function TelegramProvider({ children }: TelegramProviderProps) {
   const [isWebAppReady, setIsWebAppReady] = useState(false);
+  const [webApp, setWebApp] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     let initTimeout: NodeJS.Timeout;
@@ -96,7 +98,10 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
       }
 
       const success = await initWebApp();
-      if (success) {
+      if (success && window.Telegram?.WebApp) {
+        const app = window.Telegram.WebApp;
+        setWebApp(app);
+        setUser(app.initDataUnsafe?.user || null);
         setIsWebAppReady(true);
       } else {
         attempts++;
@@ -127,20 +132,20 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
 
   const haptic = {
     impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
-      if (window.Telegram?.WebApp) {
-        window.Telegram.WebApp.HapticFeedback.impactOccurred(style);
+      if (webApp) {
+        webApp.HapticFeedback.impactOccurred(style);
       }
     },
     notification: (type: 'error' | 'success' | 'warning') => {
-      if (window.Telegram?.WebApp) {
-        window.Telegram.WebApp.HapticFeedback.notificationOccurred(type);
+      if (webApp) {
+        webApp.HapticFeedback.notificationOccurred(type);
       }
     }
   }
 
   const value = {
-    webApp: isWebAppReady && window.Telegram?.WebApp ? window.Telegram.WebApp : null,
-    user: isWebAppReady && window.Telegram?.WebApp ? window.Telegram.WebApp.initDataUnsafe.user : null,
+    webApp,
+    user,
     isReady: isWebAppReady,
     haptic
   }

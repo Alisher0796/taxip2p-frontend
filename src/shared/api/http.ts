@@ -18,7 +18,11 @@ export const createHttp = () => {
     };
 
     // Проверяем наличие Telegram WebApp
-    if (!window.Telegram?.WebApp) {
+    if (!window.Telegram?.WebApp?.initData) {
+      console.warn('WebApp not initialized:', { 
+        webApp: window.Telegram?.WebApp,
+        initData: window.Telegram?.WebApp?.initData
+      });
       throw new Error('Приложение доступно только через Telegram');
     }
 
