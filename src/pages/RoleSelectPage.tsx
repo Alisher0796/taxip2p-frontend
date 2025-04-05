@@ -30,7 +30,7 @@ const RoleSelectPage = () => {
         isReady,
         user: webApp.initDataUnsafe.user
       });
-      const updatedProfile = await http<{ role: Role }>('/api/profile', { method: 'PUT', body: { role } });
+      const updatedProfile = await http<{ role: Role }>('/profile', { method: 'PUT', body: { role } });
       console.log('Profile updated:', updatedProfile);
       
       console.log('Setting role in store...');
