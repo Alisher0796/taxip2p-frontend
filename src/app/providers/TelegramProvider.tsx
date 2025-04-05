@@ -60,6 +60,9 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
 
         const webApp = window.Telegram.WebApp;
 
+        // Сообщаем о готовности
+        webApp.ready();
+
         // Проверяем наличие необходимых данных
         if (!webApp.initData || !webApp.initDataUnsafe?.user) {
           console.log('Waiting for WebApp initialization...', {
@@ -70,12 +73,12 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
         }
 
         // Логируем информацию о WebApp
-        if (webApp.version) console.log('WebApp version:', webApp.version);
-        if (webApp.platform) console.log('WebApp platform:', webApp.platform);
-        if (webApp.initDataUnsafe?.user) console.log('WebApp user:', webApp.initDataUnsafe.user);
-
-        // Сообщаем о готовности
-        webApp.ready();
+        console.log('WebApp initialized:', {
+          version: webApp.version,
+          platform: webApp.platform,
+          initData: webApp.initData,
+          user: webApp.initDataUnsafe.user
+        });
         
         // Разворачиваем окно только после успешной инициализации
         webApp.expand();
