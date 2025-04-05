@@ -25,7 +25,7 @@ const RoleSelectPage = () => {
         if (profile?.role) {
           setRole(profile.role);
           const nextRoute = profile.role === 'passenger' ? '/passenger' : '/driver';
-          navigate(nextRoute);
+          navigate(nextRoute, { replace: true });
         }
       } catch (error) {
         console.error('Error checking role:', error);
@@ -33,7 +33,7 @@ const RoleSelectPage = () => {
     };
 
     checkRole();
-  }, [isReady, navigate, hideBackButton, hideMainButton, setRole]);
+  }, [isReady]); // Зависим только от isReady
 
   const handleRoleSelect = async (role: Role) => {
     console.log('Selecting role:', role);

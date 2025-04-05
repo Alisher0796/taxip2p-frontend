@@ -21,11 +21,6 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
     const initializeWebApp = () => {
       try {
         // Проверяем, что приложение запущено в Telegram
-        if (!window.Telegram?.WebApp) {
-          console.warn('Telegram WebApp is not available. Make sure the app is running inside Telegram.')
-          return
-        }
-
         if (!WebApp.initData) {
           console.warn('WebApp initData is empty. Make sure the app is running inside Telegram.')
           return
@@ -40,21 +35,16 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
       }
     }
 
-    // Запускаем инициализацию с небольшой задержкой
-    const timer = setTimeout(initializeWebApp, 100)
+    // Запускаем инициализацию сразу
+    initializeWebApp()
 
     // Очистка при размонтировании
     return () => {
-      clearTimeout(timer)
       try {
-        if (window.Telegram?.WebApp) {
-          // Убираем кнопку и очищаем обработчики
-          WebApp.MainButton.hide()
-          WebApp.MainButton.offClick(() => {})
-          WebApp.BackButton.hide()
-          WebApp.BackButton.offClick(() => {})
-          WebApp.close()
-        }
+        WebApp.MainButton.hide()
+        WebApp.MainButton.offClick(() => {})
+        WebApp.BackButton.hide()
+        WebApp.BackButton.offClick(() => {})
       } catch (error) {
         console.error('Error cleaning up WebApp:', error)
       }
@@ -63,31 +53,50 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
 
   const haptic = {
     impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
-      WebApp.HapticFeedback.impactOccurred(style)
+      try {
+        WebApp.HapticFeedback.impactOccurred(style)
+      } catch (error) {
+        console.error('Error triggering haptic impact:', error)
+      }
     },
     notification: (type: 'error' | 'success' | 'warning') => {
-      WebApp.HapticFeedback.notificationOccurred(type)
+      try {
+        WebApp.HapticFeedback.notificationOccurred(type)
+      } catch (error) {
+        console.error('Error triggering haptic notification:', error)
+      }
     }
   }
 
-  const showMainButton = () => WebApp.MainButton.show()
-  const hideMainButton = () => WebApp.MainButton.hide()
-  const showBackButton = () => WebApp.BackButton.show()
-  const hideBackButton = () => WebApp.BackButton.hide()
+  const showMainButton = () => {
+    if (isReady) WebApp.MainButton.show()
+  }
 
-  const value = {
-    webApp: WebApp,
-    user: WebApp.initDataUnsafe.user,
-    haptic,
-    isReady,
-    showMainButton,
-    hideMainButton,
-    showBackButton,
-    hideBackButton
+  const hideMainButton = () => {
+    if (isReady) WebApp.MainButton.hide()
+  }
+
+  const showBackButton = () => {
+    if (isReady) WebApp.BackButton.show()
+  }
+
+  const hideBackButton = () => {
+    if (isReady) WebApp.BackButton.hide()
   }
 
   return (
-    <TelegramContext.Provider value={value}>
+    <TelegramContext.Provider
+      value={{
+        webApp: WebApp,
+        user: WebApp.initDataUnsafe?.user || null,
+        haptic,
+        isReady,
+        showMainButton,
+        hideMainButton,
+        showBackButton,
+        hideBackButton,
+      }}
+    >
       {children}
     </TelegramContext.Provider>
   )
