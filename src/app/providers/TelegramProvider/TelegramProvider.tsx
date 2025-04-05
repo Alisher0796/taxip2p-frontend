@@ -18,31 +18,43 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    try {
-      if (!isReady) {
+    const initializeWebApp = () => {
+      try {
         // Проверяем, что приложение запущено в Telegram
+        if (!window.Telegram?.WebApp) {
+          console.warn('Telegram WebApp is not available. Make sure the app is running inside Telegram.')
+          return
+        }
+
         if (!WebApp.initData) {
           console.warn('WebApp initData is empty. Make sure the app is running inside Telegram.')
+          return
         }
 
         // Инициализация Telegram WebApp
         WebApp.ready()
         WebApp.expand()
         setIsReady(true)
+      } catch (error) {
+        console.error('Error initializing Telegram WebApp:', error)
       }
-    } catch (error) {
-      console.error('Error initializing Telegram WebApp:', error)
     }
+
+    // Запускаем инициализацию с небольшой задержкой
+    const timer = setTimeout(initializeWebApp, 100)
 
     // Очистка при размонтировании
     return () => {
+      clearTimeout(timer)
       try {
-        WebApp.close()
+        if (window.Telegram?.WebApp) {
+          WebApp.close()
+        }
       } catch (error) {
         console.error('Error closing Telegram WebApp:', error)
       }
     }
-  }, [isReady])
+  }, [])
 
   const haptic = {
     impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
