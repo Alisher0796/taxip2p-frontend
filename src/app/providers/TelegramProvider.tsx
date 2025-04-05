@@ -34,53 +34,48 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
 
   useEffect(() => {
     let initTimeout: NodeJS.Timeout;
-    let checkTimeout: NodeJS.Timeout;
-
-    const waitForTelegramWebApp = () => {
-      return new Promise<boolean>((resolve) => {
-        const check = () => {
-          if (window.Telegram?.WebApp) {
-            resolve(true);
-          } else {
-            checkTimeout = setTimeout(check, 100);
-          }
-        };
-        check();
-      });
-    };
 
     const initWebApp = async () => {
       try {
-        // Ждем появления объекта Telegram.WebApp
-        const webAppAvailable = await waitForTelegramWebApp();
-        if (!webAppAvailable || !window.Telegram?.WebApp) {
+        // Проверяем наличие WebApp
+        if (!window.Telegram?.WebApp) {
           console.warn('Telegram WebApp SDK not available');
           return false;
         }
 
         const webApp = window.Telegram.WebApp;
 
-        // Сообщаем о готовности
-        webApp.ready();
+        // Добавляем обработчик события готовности
+        webApp.onEvent('viewportChanged', () => {
+          console.log('Viewport changed, checking WebApp state...');
+          if (webApp.initData && webApp.initDataUnsafe?.user) {
+            console.log('WebApp initialized:', {
+              version: webApp.version,
+              platform: webApp.platform,
+              initData: webApp.initData,
+              user: webApp.initDataUnsafe.user
+            });
+            setWebApp(webApp);
+            setUser(webApp.initDataUnsafe.user);
+            setIsWebAppReady(true);
+          }
+        });
 
-        // Проверяем наличие необходимых данных
-        if (!webApp.initData || !webApp.initDataUnsafe?.user) {
-          console.log('Waiting for WebApp initialization...', {
+        // Проверяем текущее состояние
+        if (webApp.initData && webApp.initDataUnsafe?.user) {
+          console.log('WebApp already initialized:', {
+            version: webApp.version,
+            platform: webApp.platform,
             initData: webApp.initData,
-            initDataUnsafe: webApp.initDataUnsafe
+            user: webApp.initDataUnsafe.user
           });
-          return false;
+          setWebApp(webApp);
+          setUser(webApp.initDataUnsafe.user);
+          setIsWebAppReady(true);
         }
 
-        // Логируем информацию о WebApp
-        console.log('WebApp initialized:', {
-          version: webApp.version,
-          platform: webApp.platform,
-          initData: webApp.initData,
-          user: webApp.initDataUnsafe.user
-        });
-        
-        // Разворачиваем окно только после успешной инициализации
+        // Сообщаем о готовности и разворачиваем окно
+        webApp.ready();
         webApp.expand();
         
         return true;
@@ -118,9 +113,6 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
     return () => {
       if (initTimeout) {
         clearTimeout(initTimeout);
-      }
-      if (checkTimeout) {
-        clearTimeout(checkTimeout);
       }
 
       try {
