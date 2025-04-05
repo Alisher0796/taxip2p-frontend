@@ -23,7 +23,19 @@ export const http = async <T>(endpoint: string, options: RequestOptions = {}): P
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Неизвестная ошибка' }));
+    console.error('HTTP Error:', {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.url,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+
+    const error = await response.json().catch((parseError) => {
+      console.error('Error parsing response:', parseError);
+      return { message: 'Неизвестная ошибка' };
+    });
+
+    console.error('Error response body:', error);
     throw new Error(error.message || 'Что-то пошло не так');
   }
 

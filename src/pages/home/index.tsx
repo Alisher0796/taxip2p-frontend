@@ -2,14 +2,20 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/ui/Button/Button';
 import { Role } from '@/shared/types/common';
 import { useUserStore } from '@/entities/user/model/store';
+import { api } from '@/shared/api/http';
 
 export default function HomePage() {
   const navigate = useNavigate();
   const setRole = useUserStore((state) => state.setRole);
 
-  const handleRoleSelect = (role: Role) => {
-    setRole(role);
-    navigate(`/${role}`);
+  const handleRoleSelect = async (role: Role) => {
+    try {
+      await api.updateProfile({ role });
+      setRole(role);
+      navigate(role === 'passenger' ? '/passenger/create' : '/driver/requests');
+    } catch (error) {
+      console.error('Error updating role:', error);
+    }
   };
 
   return (

@@ -2,14 +2,28 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/ui/Button/Button';
 import { useUserStore } from '@/entities/user/model/store';
 import { Role } from '@/shared/types/common';
+import { api } from '@/shared/api/http';
 
-export const RoleSelectPage = () => {
+const RoleSelectPage = () => {
   const navigate = useNavigate();
   const setRole = useUserStore((state) => state.setRole);
 
-  const handleRoleSelect = (role: Role) => {
-    setRole(role);
-    navigate(role === 'passenger' ? '/passenger/create' : '/driver/requests');
+  const handleRoleSelect = async (role: Role) => {
+    console.log('Selecting role:', role);
+    try {
+      console.log('Sending request to update profile...');
+      const updatedProfile = await api.updateProfile({ role });
+      console.log('Profile updated:', updatedProfile);
+      
+      console.log('Setting role in store...');
+      setRole(role);
+      
+      const nextRoute = role === 'passenger' ? '/passenger/create' : '/driver/requests';
+      console.log('Navigating to:', nextRoute);
+      navigate(nextRoute);
+    } catch (error) {
+      console.error('Error updating role:', error);
+    }
   };
 
   return (
@@ -37,3 +51,5 @@ export const RoleSelectPage = () => {
     </div>
   );
 };
+
+export default RoleSelectPage;
