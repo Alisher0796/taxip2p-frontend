@@ -15,11 +15,16 @@ export const createHttp = () => {
   return async <T>(endpoint: string, options: RequestOptions = {}): Promise<T> => {
     const { method = 'GET', body, headers = {} } = options;
 
+    if (!webApp?.initData) {
+      console.error('No Telegram WebApp init data available');
+      throw new Error('Невозможно получить данные Telegram');
+    }
+
     const response = await fetch(`${API_URL}${endpoint}`, {
       method,
       headers: {
         'Content-Type': 'application/json',
-        'X-Telegram-Init-Data': webApp?.initData || '',
+        'X-Telegram-Init-Data': webApp.initData,
         ...headers,
       },
       body: body ? JSON.stringify(body) : undefined,

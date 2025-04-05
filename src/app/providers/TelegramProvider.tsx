@@ -20,15 +20,24 @@ interface TelegramProviderProps {
 export function TelegramProvider({ children }: TelegramProviderProps) {
   useEffect(() => {
     // Инициализация Telegram WebApp
-    console.log('WebApp:', WebApp)
-    console.log('WebApp init data:', WebApp.initData)
-    console.log('WebApp init data unsafe:', WebApp.initDataUnsafe)
-    console.log('WebApp user:', WebApp.initDataUnsafe.user)
-    console.log('WebApp platform:', WebApp.platform)
-    console.log('WebApp version:', WebApp.version)
+    try {
+      if (!WebApp.initData) {
+        console.error('No WebApp init data available')
+        return
+      }
 
-    WebApp.ready()
-    WebApp.expand()
+      console.log('WebApp:', WebApp)
+      console.log('WebApp init data:', WebApp.initData)
+      console.log('WebApp init data unsafe:', WebApp.initDataUnsafe)
+      console.log('WebApp user:', WebApp.initDataUnsafe.user)
+      console.log('WebApp platform:', WebApp.platform)
+      console.log('WebApp version:', WebApp.version)
+
+      WebApp.ready()
+      WebApp.expand()
+    } catch (error) {
+      console.error('Error initializing Telegram WebApp:', error)
+    }
 
     // Очистка при размонтировании
     return () => {

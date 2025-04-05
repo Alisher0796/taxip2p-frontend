@@ -11,8 +11,11 @@ const RoleSelectPage = () => {
   const handleRoleSelect = async (role: Role) => {
     console.log('Selecting role:', role);
     try {
+      // Создаем новый экземпляр HTTP клиента
+      const http = createHttp();
+      
       console.log('Sending request to update profile...');
-      const updatedProfile = await createHttp()('/profile', { method: 'PUT', body: { role } });
+      const updatedProfile = await http('/profile', { method: 'PUT', body: { role } });
       console.log('Profile updated:', updatedProfile);
       
       console.log('Setting role in store...');
@@ -23,6 +26,13 @@ const RoleSelectPage = () => {
       navigate(nextRoute);
     } catch (error) {
       console.error('Error updating role:', error);
+      
+      // Показываем ошибку пользователю
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert('Произошла ошибка при выборе роли');
+      }
     }
   };
 
