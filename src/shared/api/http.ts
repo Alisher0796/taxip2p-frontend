@@ -33,8 +33,10 @@ export const createHttp = () => {
 
     // Добавляем initData в заголовки
     try {
-      requestHeaders['X-Telegram-Init-Data'] = WebApp.initData;
-      console.log('InitData:', WebApp.initData);
+      // Получаем initData и не кодируем его
+      const initData = WebApp.initData;
+      requestHeaders['X-Telegram-Init-Data'] = initData;
+      console.log('InitData:', initData);
     } catch (error) {
       console.error('Error getting initData:', error);
       throw new Error('Ошибка авторизации Telegram');
