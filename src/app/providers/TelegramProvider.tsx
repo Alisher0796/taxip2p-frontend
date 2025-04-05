@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useEffect, useState, type ReactNode } from 'react';
 import WebApp from '@twa-dev/sdk';
 
 type EventNames = 'viewportChanged' | 'themeChanged' | 'mainButtonClicked' | 'backButtonClicked' | 'settingsButtonClicked';
@@ -77,7 +77,7 @@ interface TelegramContextType {
     colorScheme: ColorScheme;
     params: ThemeParams;
   };
-  sendData: (data: any) => void;
+  sendData: (data: unknown) => void;
   close: () => void;
   expand: () => void;
   onEvent: (eventType: EventNames, callback: () => void) => void;
@@ -175,7 +175,7 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
         backButton,
         settingsButton,
         theme,
-        sendData: (data: any) => WebApp.sendData(data),
+        sendData: (data: unknown) => WebApp.sendData(data),
         close: () => WebApp.close(),
         expand: () => WebApp.expand(),
         onEvent: (eventType: EventNames, callback: () => void) => WebApp.onEvent(eventType, callback),
@@ -187,10 +187,4 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
   );
 }
 
-export function useTelegram() {
-  const context = useContext(TelegramContext)
-  if (!context) {
-    throw new Error('useTelegram must be used within TelegramProvider')
-  }
-  return context
-}
+
