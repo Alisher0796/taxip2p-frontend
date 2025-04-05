@@ -1,4 +1,5 @@
 import type { Order, OrderStatus } from '@/shared/types/api';
+import WebApp from '@twa-dev/sdk';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -18,24 +19,20 @@ export const createHttp = () => {
     };
 
     // Проверяем наличие Telegram WebApp
-    if (!window.Telegram?.WebApp) {
+    if (!WebApp) {
       throw new Error('Приложение доступно только через Telegram');
     }
 
-    // Получаем initData напрямую из WebApp
-    const webApp = window.Telegram.WebApp;
-
     // Проверяем наличие необходимых данных
-    if (!webApp.initData || !webApp.initDataUnsafe?.user) {
+    if (!WebApp.initDataUnsafe?.user) {
       console.warn('WebApp not initialized:', { 
-        initData: webApp.initData,
-        initDataUnsafe: webApp.initDataUnsafe
+        initDataUnsafe: WebApp.initDataUnsafe
       });
       throw new Error('Приложение доступно только через Telegram');
     }
 
     // Добавляем initData в заголовки
-    requestHeaders['X-Telegram-Init-Data'] = webApp.initData;
+    requestHeaders['X-Telegram-Init-Data'] = JSON.stringify(WebApp.initDataUnsafe);
 
     const response = await fetch(`${API_URL}${endpoint}`, {
       method,
