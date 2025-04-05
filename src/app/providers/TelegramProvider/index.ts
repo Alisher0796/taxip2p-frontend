@@ -1,2 +1,2 @@
 export { TelegramProvider } from './TelegramProvider'
-export { useTelegram } from './useTelegram'
+export { useTelegram } from './hooks/useTelegram'

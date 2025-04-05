@@ -37,7 +37,7 @@ export function useTelegram() {
         },
         isReady: true
       }
-    } catch (e) {
+    } catch {
       console.warn('useTelegram: WebApp не инициализирован, используются fallback значения')
       return fallbackContext
     }
