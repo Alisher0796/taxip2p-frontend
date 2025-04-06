@@ -1,6 +1,7 @@
 import { ReactNode, useContext, useEffect, useState } from 'react'
 import WebApp from '@twa-dev/sdk'
 import { TelegramContext } from './context'
+import type { WebAppUser } from './types'
 
 export function useTelegram() {
   const context = useContext(TelegramContext)
@@ -16,30 +17,40 @@ export interface TelegramProviderProps {
 
 export function TelegramProvider({ children }: TelegramProviderProps) {
   const [isReady, setIsReady] = useState(false)
+  const [user, setUser] = useState<WebAppUser | null>(null)
 
-  // Инициализируем состояние сразу
   useEffect(() => {
-    try {
-      // Проверяем, что приложение запущено в Telegram
-      if (!WebApp.initData) {
-        console.warn('WebApp initData is empty')
+    const initWebApp = () => {
+      if (!WebApp?.initDataUnsafe?.user) {
+        console.warn('[TelegramProvider] WebApp.initDataUnsafe.user is missing', {
+          initData: WebApp?.initData,
+          user: WebApp?.initDataUnsafe?.user
+        })
         return
       }
 
       setIsReady(true)
-    } catch (error) {
-      console.error('Error initializing Telegram WebApp:', error)
+      setUser(WebApp.initDataUnsafe.user)
+
+      WebApp.ready()
+      WebApp.expand()
+
+      console.log('[TelegramProvider] Telegram WebApp initialized:', {
+        initData: WebApp.initData,
+        user: WebApp.initDataUnsafe.user,
+      })
     }
 
-    // Очистка при размонтировании
+    initWebApp()
+
     return () => {
       try {
         WebApp.MainButton.hide()
-        WebApp.MainButton.offClick(() => {})
         WebApp.BackButton.hide()
-        WebApp.BackButton.offClick(() => {})
+        WebApp.MainButton.offClick?.(() => {})
+        WebApp.BackButton.offClick?.(() => {})
       } catch (error) {
-        console.error('Error cleaning up WebApp:', error)
+        console.warn('[TelegramProvider] Cleanup error:', error)
       }
     }
   }, [])
@@ -47,43 +58,32 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
   const haptic = {
     impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
       try {
-        WebApp.HapticFeedback.impactOccurred(style)
+        WebApp.HapticFeedback?.impactOccurred(style)
       } catch (error) {
-        console.error('Error triggering haptic impact:', error)
+        console.warn('[TelegramProvider] Haptic impact error:', error)
       }
     },
     notification: (type: 'error' | 'success' | 'warning') => {
       try {
-        WebApp.HapticFeedback.notificationOccurred(type)
+        WebApp.HapticFeedback?.notificationOccurred(type)
       } catch (error) {
-        console.error('Error triggering haptic notification:', error)
+        console.warn('[TelegramProvider] Haptic notification error:', error)
       }
-    }
+    },
   }
 
-  const showMainButton = () => {
-    if (isReady) WebApp.MainButton.show()
-  }
-
-  const hideMainButton = () => {
-    if (isReady) WebApp.MainButton.hide()
-  }
-
-  const showBackButton = () => {
-    if (isReady) WebApp.BackButton.show()
-  }
-
-  const hideBackButton = () => {
-    if (isReady) WebApp.BackButton.hide()
-  }
+  const showMainButton = () => WebApp.MainButton?.show()
+  const hideMainButton = () => WebApp.MainButton?.hide()
+  const showBackButton = () => WebApp.BackButton?.show()
+  const hideBackButton = () => WebApp.BackButton?.hide()
 
   return (
     <TelegramContext.Provider
       value={{
         webApp: WebApp,
-        user: WebApp.initDataUnsafe?.user || null,
-        haptic,
+        user,
         isReady,
+        haptic,
         showMainButton,
         hideMainButton,
         showBackButton,

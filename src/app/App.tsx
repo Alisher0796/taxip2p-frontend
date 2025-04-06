@@ -7,25 +7,39 @@ import { SocketProvider } from './providers/SocketProvider'
 import { Router } from './Router'
 
 export function App() {
-  const [isWebView, setIsWebView] = React.useState(false);
+  const [isWebView, setIsWebView] = React.useState(false)
 
   React.useEffect(() => {
-    // Проверяем наличие WebApp только при монтировании
-    const isWebApp = !!WebApp?.initDataUnsafe?.user;
-    console.log('WebApp check:', { 
-      initData: WebApp.initData,
-      user: WebApp.initDataUnsafe?.user,
-      isWebApp
-    });
-    
-    if (isWebApp) {
-      // Если WebApp доступен, инициализируем его
-      WebApp.ready();
-      WebApp.expand();
+    const checkWebApp = () => {
+      const userExists = !!WebApp?.initDataUnsafe?.user
+      const initDataPresent = !!WebApp?.initData
+      const isInsideTelegram = userExists && initDataPresent
+
+      console.log('Checking WebApp context:', {
+        initData: WebApp.initData,
+        user: WebApp.initDataUnsafe?.user,
+        isInsideTelegram,
+      })
+
+      if (isInsideTelegram) {
+        WebApp.ready()
+        WebApp.expand()
+      }
+
+      setIsWebView(isInsideTelegram)
     }
-    
-    setIsWebView(isWebApp);
-  }, []); // Запускаемся только один раз при монтировании
+
+    checkWebApp()
+
+    const interval = setInterval(() => {
+      if (WebApp?.initDataUnsafe?.user) {
+        checkWebApp()
+        clearInterval(interval)
+      }
+    }, 200)
+
+    return () => clearInterval(interval)
+  }, [])
 
   if (!isWebView) {
     return (

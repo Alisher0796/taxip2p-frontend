@@ -1,2 +1,3 @@
-export { TelegramProvider, useTelegram, type TelegramProviderProps } from './TelegramProvider'
-export { TelegramContext, type TelegramContextType } from './context'
+export { TelegramContext } from './context'
+export type { TelegramContextType } from './types'
+export { TelegramProvider, useTelegram } from './TelegramProvider'
