@@ -8,15 +8,15 @@ import { useEffect, useRef, useState } from 'react'
 const RoleSelectPage = () => {
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(true)
+  const [isChecking, setIsChecking] = useState(false)
   const { isReady, webApp, hideBackButton, hideMainButton, haptic } = useTelegram()
   const hasNavigated = useRef(false)
 
   useEffect(() => {
-    const controller = new AbortController()
+    if (!isReady || hasNavigated.current || isChecking) return
 
     const checkRole = async () => {
-      if (!isReady || hasNavigated.current) return
-
+      setIsChecking(true)
       try {
         console.log('Checking role...')
         const http = createHttp()
@@ -24,31 +24,26 @@ const RoleSelectPage = () => {
 
         console.log('Profile response:', profile)
 
-        if (profile?.role && !hasNavigated.current && !controller.signal.aborted) {
+        if (profile?.role && !hasNavigated.current) {
           const nextRoute = profile.role === 'passenger' ? '/passenger' : '/driver'
           console.log('Navigating to:', nextRoute)
           hasNavigated.current = true
           navigate(nextRoute, { replace: true })
         }
       } catch (error) {
-        if (!controller.signal.aborted) {
-          console.error('Error checking role:', error)
-        }
+        console.error('Error checking role:', error)
       } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false)
-        }
+        setIsLoading(false)
+        setIsChecking(false)
       }
     }
 
-    if (isReady && !hasNavigated.current) {
-      hideBackButton()
-      hideMainButton()
-      checkRole()
-    }
+    hideBackButton()
+    hideMainButton()
+    checkRole()
 
     return () => {
-      controller.abort()
+      setIsChecking(false)
     }
   }, [isReady, navigate, hideBackButton, hideMainButton])
 
