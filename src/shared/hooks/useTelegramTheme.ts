@@ -4,27 +4,34 @@ import { useTelegram } from '@/app/providers/TelegramProvider'
 export function useTelegramTheme() {
   const { webApp } = useTelegram()
 
-  useEffect(() => {
-    // Set theme colors based on Telegram theme
-    if (webApp?.themeParams) {
-      const root = document.documentElement
-      const {
-        bg_color,
-        text_color,
-        hint_color,
-        button_color,
-        button_text_color,
-        secondary_bg_color
-      } = webApp.themeParams
+  const applyTheme = (params: Telegram.WebAppThemeParams) => {
+    const root = document.documentElement
 
-      root.style.setProperty('--background', bg_color)
-      root.style.setProperty('--foreground', text_color)
-      root.style.setProperty('--muted', hint_color)
-      root.style.setProperty('--muted-foreground', hint_color)
-      root.style.setProperty('--primary', button_color)
-      root.style.setProperty('--primary-foreground', button_text_color)
-      root.style.setProperty('--secondary', secondary_bg_color)
-      root.style.setProperty('--secondary-foreground', text_color)
+    root.style.setProperty('--background', params.bg_color || '#ffffff')
+    root.style.setProperty('--foreground', params.text_color || '#000000')
+    root.style.setProperty('--muted', params.hint_color || '#999999')
+    root.style.setProperty('--muted-foreground', params.hint_color || '#999999')
+    root.style.setProperty('--primary', params.button_color || '#0088cc')
+    root.style.setProperty('--primary-foreground', params.button_text_color || '#ffffff')
+    root.style.setProperty('--secondary', params.secondary_bg_color || '#f0f0f0')
+    root.style.setProperty('--secondary-foreground', params.text_color || '#000000')
+  }
+
+  useEffect(() => {
+    if (!webApp?.themeParams) return
+
+    applyTheme(webApp.themeParams)
+
+    const handler = () => {
+      if (webApp.themeParams) {
+        applyTheme(webApp.themeParams)
+      }
     }
-  }, [webApp?.themeParams])
+
+    webApp.onEvent('themeChanged', handler)
+
+    return () => {
+      webApp.offEvent('themeChanged', handler)
+    }
+  }, [webApp])
 }

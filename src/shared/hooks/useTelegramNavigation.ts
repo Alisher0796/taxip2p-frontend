@@ -5,24 +5,25 @@ import { useTelegram } from '@/app/providers/TelegramProvider'
 export function useTelegramNavigation() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { webApp } = useTelegram()
+  const { webApp, isReady } = useTelegram()
 
   useEffect(() => {
-    // Enable back button only if we're not on the home page
-    if (location.pathname !== '/') {
-      webApp?.BackButton.show()
-    } else {
-      webApp?.BackButton.hide()
-    }
+    if (!isReady || !webApp?.BackButton) return
 
     const handleBackClick = () => {
       navigate(-1)
     }
 
-    webApp?.BackButton.onClick(handleBackClick)
+    if (location.pathname !== '/') {
+      webApp.BackButton.show()
+    } else {
+      webApp.BackButton.hide()
+    }
+
+    webApp.BackButton.onClick(handleBackClick)
 
     return () => {
-      webApp?.BackButton.offClick(handleBackClick)
+      webApp.BackButton.offClick(handleBackClick)
     }
-  }, [location.pathname, navigate, webApp])
+  }, [location.pathname, navigate, webApp, isReady])
 }
