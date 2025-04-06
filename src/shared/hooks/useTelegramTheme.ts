@@ -1,10 +1,11 @@
 import { useEffect } from 'react'
 import { useTelegram } from '@/app/providers/TelegramProvider'
+import type { ThemeParams } from '@/shared/types/telegram'
 
 export function useTelegramTheme() {
   const { webApp } = useTelegram()
 
-  const applyTheme = (params: Telegram.WebAppThemeParams) => {
+  const applyTheme = (params: ThemeParams) => {
     const root = document.documentElement
 
     root.style.setProperty('--background', params.bg_color || '#ffffff')
