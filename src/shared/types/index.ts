@@ -27,14 +27,14 @@ export type {
 
 // Telegram Types
 export type {
-  TelegramUser,
-  TelegramWebAppInitData,
-  TelegramWebAppBackButton,
-  TelegramWebAppMainButton,
-  TelegramHaptic,
-  TelegramThemeParams,
+  WebAppUser,
+  ThemeParams,
+  MainButton,
+  BackButton,
+  HapticFeedback,
+  WebAppEventType,
   TelegramWebApp,
-} from './telegram';
+} from './telegram.d';
 
 // Theme Types
 export type { ThemeColors, ThemeConfig } from './theme';
