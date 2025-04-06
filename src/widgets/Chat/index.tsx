@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSocket } from '@/app/providers/SocketProvider'
-import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider'
+import { useTelegram } from '@/app/providers/TelegramProvider'
 import { Message } from './ui/Message'
 import { MessageInput } from './ui/MessageInput'
 import type { Message as MessageType } from './model/types'
@@ -23,7 +23,7 @@ export function Chat({ orderId }: ChatProps) {
 
     const handleNewMessage = (message: MessageType) => {
       setMessages((prev) => [...prev, message])
-      haptic.notification('success')
+      haptic?.notification('success')
     }
 
     socket.on('newMessage', handleNewMessage)
@@ -42,7 +42,7 @@ export function Chat({ orderId }: ChatProps) {
   const handleSendMessage = (text: string) => {
     if (!socket || !text.trim()) return
     socket.emit('chatMessage', { orderId, text })
-    haptic.impact('light')
+    haptic?.impact('light')
   }
 
   return (

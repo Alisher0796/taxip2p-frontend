@@ -58,7 +58,7 @@ const RoleSelectPage = () => {
         body: { role }
       })
       
-      haptic.notification('success')
+      haptic?.notification('success')
       
       const nextRoute = role === 'passenger' ? '/passenger' : '/driver'
       console.log('Navigating after role selection:', nextRoute)
@@ -66,7 +66,7 @@ const RoleSelectPage = () => {
       navigate(nextRoute, { replace: true })
     } catch (error) {
       console.error('Error setting role:', error)
-      haptic.notification('error')
+      haptic?.notification('error')
     }
   }
 

@@ -91,7 +91,7 @@ export default function ActiveOrderPage() {
             message: 'Водитель начал поездку',
             buttons: [{ type: 'ok' }]
           });
-          haptic.notification('success');
+          haptic?.notification('success');
         }
 
         // Уведомляем о завершении поездки
@@ -101,7 +101,7 @@ export default function ActiveOrderPage() {
             message: 'Водитель завершил поездку',
             buttons: [{ type: 'ok' }]
           });
-          haptic.notification('success');
+          haptic?.notification('success');
           navigate('/passenger');
         }
       }
@@ -139,7 +139,7 @@ export default function ActiveOrderPage() {
       WebApp.MainButton.showProgress();
       if (!currentOrder) return;
       await api.updateOrder(currentOrder.id, { status: 'cancelled' });
-      haptic.notification('success');
+      haptic?.notification('success');
       setCurrentOrder(null);
       navigate('/passenger');
     } catch (error) {
@@ -149,7 +149,7 @@ export default function ActiveOrderPage() {
         message: 'Не удалось отменить заказ',
         buttons: [{ type: 'ok' }]
       });
-      haptic.notification('error');
+      haptic?.notification('error');
     } finally {
       WebApp.MainButton.hideProgress();
     }

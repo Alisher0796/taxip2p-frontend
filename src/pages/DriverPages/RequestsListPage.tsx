@@ -28,7 +28,7 @@ export const RequestsListPage = () => {
     socket.on('order:new', (order: Order) => {
       if (order.status === 'pending') {
         setActiveOrders([...(orders || []), order]);
-        haptic.notification('success');
+        haptic?.notification('success');
       }
     });
 
@@ -41,7 +41,7 @@ export const RequestsListPage = () => {
         ).filter((order: Order) => order.status === 'pending')
       );
 
-      haptic.notification('success');
+      haptic?.notification('success');
     });
 
     return () => {

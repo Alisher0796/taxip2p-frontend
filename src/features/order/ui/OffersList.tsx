@@ -30,7 +30,7 @@ export function OffersList({ orderId }: Props) {
         driverId: offer.driverId,
         finalPrice: offer.price
       });
-      haptic.notification('success');
+      haptic?.notification('success');
       navigate('/driver/active');
     } catch (error) {
       console.error('Failed to accept offer:', error);
@@ -39,7 +39,7 @@ export function OffersList({ orderId }: Props) {
         message: 'Не удалось принять предложение. Попробуйте еще раз.',
         buttons: [{ type: 'ok' }]
       });
-      haptic.notification('error');
+      haptic?.notification('error');
     } finally {
       WebApp.MainButton.hideProgress();
     }
@@ -48,7 +48,7 @@ export function OffersList({ orderId }: Props) {
   const handleRejectOffer = async (offer: PriceOffer) => {
     try {
       await api.updateOffer(offer.id, { status: 'rejected' });
-      haptic.notification('success');
+      haptic?.notification('success');
     } catch (error) {
       console.error('Failed to reject offer:', error);
       WebApp.showPopup({
@@ -56,7 +56,7 @@ export function OffersList({ orderId }: Props) {
         message: 'Не удалось отклонить предложение. Попробуйте еще раз.',
         buttons: [{ type: 'ok' }]
       });
-      haptic.notification('error');
+      haptic?.notification('error');
     }
   };
 

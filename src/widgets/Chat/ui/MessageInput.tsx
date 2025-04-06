@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider'
+import { useTelegram } from '@/app/providers/TelegramProvider'
 import { Button } from '@/shared/ui/Button'
 
 interface MessageInputProps {

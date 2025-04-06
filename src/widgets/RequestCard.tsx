@@ -22,7 +22,7 @@ export function RequestCard({ order, onAccept, onMakeOffer }: Props) {
       WebApp.MainButton.showProgress();
       await onMakeOffer(Number(price));
       setPrice('');
-      haptic.notification('success');
+      haptic?.notification('success');
       WebApp.showPopup({
         title: 'Успех',
         message: 'Ваше предложение отправлено',
@@ -30,7 +30,7 @@ export function RequestCard({ order, onAccept, onMakeOffer }: Props) {
       });
     } catch (error) {
       console.error('Failed to create offer:', error);
-      haptic.notification('error');
+      haptic?.notification('error');
       WebApp.showPopup({
         title: 'Ошибка',
         message: 'Не удалось отправить предложение. Попробуйте еще раз.',
@@ -99,10 +99,10 @@ export function RequestCard({ order, onAccept, onMakeOffer }: Props) {
           try {
             WebApp.MainButton.showProgress();
             await onAccept();
-            haptic.notification('success');
+            haptic?.notification('success');
           } catch (error) {
             console.error('Failed to accept order:', error);
-            haptic.notification('error');
+            haptic?.notification('error');
             WebApp.showPopup({
               title: 'Ошибка',
               message: 'Не удалось принять заказ. Попробуйте еще раз.',

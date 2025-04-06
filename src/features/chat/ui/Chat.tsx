@@ -33,7 +33,7 @@ export function Chat({ orderId }: Props) {
     // Подписываемся на новые сообщения
     socket.on('message:new', (message: Message) => {
       setMessages((prev) => [...prev, message]);
-      haptic.notification('success');
+      haptic?.notification('success');
     });
 
     return () => {
@@ -49,7 +49,7 @@ export function Chat({ orderId }: Props) {
       WebApp.MainButton.showProgress();
       await api.sendMessage(orderId, text.trim());
       setText('');
-      haptic.notification('success');
+      haptic?.notification('success');
     } catch (error) {
       console.error('Failed to send message:', error);
       WebApp.showPopup({
@@ -57,7 +57,7 @@ export function Chat({ orderId }: Props) {
         message: 'Не удалось отправить сообщение. Попробуйте еще раз.',
         buttons: [{ type: 'ok' }]
       });
-      haptic.notification('error');
+      haptic?.notification('error');
     } finally {
       WebApp.MainButton.hideProgress();
     }

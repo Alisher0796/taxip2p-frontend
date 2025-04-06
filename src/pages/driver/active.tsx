@@ -91,7 +91,7 @@ export default function DriverActivePage() {
             message: 'Пассажир отменил заказ',
             buttons: [{ type: 'ok' }]
           });
-          haptic.notification('error');
+          haptic?.notification('error');
         }
       }
     });
@@ -107,7 +107,7 @@ export default function DriverActivePage() {
     try {
       WebApp.MainButton.showProgress();
       await api.updateOrder(currentOrder.id, { status: 'inProgress', startedAt: new Date().toISOString() });
-      haptic.notification('success');
+      haptic?.notification('success');
     } catch (error) {
       console.error('Failed to start order:', error);
       WebApp.showPopup({
@@ -115,7 +115,7 @@ export default function DriverActivePage() {
         message: 'Не удалось начать поездку. Попробуйте еще раз.',
         buttons: [{ type: 'ok' }]
       });
-      haptic.notification('error');
+      haptic?.notification('error');
     } finally {
       WebApp.MainButton.hideProgress();
     }
@@ -127,7 +127,7 @@ export default function DriverActivePage() {
     try {
       WebApp.MainButton.showProgress();
       await api.updateOrder(currentOrder.id, { status: 'completed', completedAt: new Date().toISOString() });
-      haptic.notification('success');
+      haptic?.notification('success');
       navigate('/driver');
     } catch (error) {
       console.error('Failed to complete order:', error);
@@ -136,7 +136,7 @@ export default function DriverActivePage() {
         message: 'Не удалось завершить поездку. Попробуйте еще раз.',
         buttons: [{ type: 'ok' }]
       });
-      haptic.notification('error');
+      haptic?.notification('error');
     } finally {
       WebApp.MainButton.hideProgress();
     }

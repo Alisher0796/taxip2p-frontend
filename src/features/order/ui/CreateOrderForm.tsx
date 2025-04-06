@@ -42,7 +42,7 @@ export const CreateOrderForm = ({ onSubmit, isLoading }: Props) => {
         try {
           WebApp.MainButton.showProgress();
           await onSubmit(data);
-          haptic.notification('success');
+          haptic?.notification('success');
         } catch (error) {
           console.error('Failed to submit form:', error);
           WebApp.showPopup({
@@ -50,7 +50,7 @@ export const CreateOrderForm = ({ onSubmit, isLoading }: Props) => {
             message: 'Не удалось создать заказ. Попробуйте еще раз.',
             buttons: [{ type: 'ok' }]
           });
-          haptic.notification('error');
+          haptic?.notification('error');
         } finally {
           WebApp.MainButton.hideProgress();
         }
