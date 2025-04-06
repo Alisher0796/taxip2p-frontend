@@ -1,11 +1,16 @@
 export type OrderStatus = 'pending' | 'negotiating' | 'accepted' | 'inProgress' | 'completed' | 'cancelled';
 export type OfferStatus = 'pending' | 'accepted' | 'rejected';
 
-export interface User {
+export interface Profile {
   id: string;
   username: string;
   telegramId: string;
   role: 'driver' | 'passenger' | null;
+  carModel?: string;
+  carNumber?: string;
+}
+
+export interface User extends Profile {
   createdAt: string;
   updatedAt: string;
 }

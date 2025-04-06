@@ -1,42 +1,55 @@
+import type { Role } from '@/shared/types/common';
+
 export interface ApiResponse<T> {
   data: T;
-  error?: string;
+  error?: ApiError;
+  success: boolean;
 }
 
 export interface ApiError {
   message: string;
   code: string;
+  details?: Record<string, string[]>;
 }
 
 export interface Profile {
   id: string;
-  role?: 'driver' | 'passenger';
-  telegramId: number;
-  username?: string;
+  role: Role | null;
+  telegramId: string;
+  username: string;
+  carModel?: string;
+  carNumber?: string;
 }
+
+export type OrderStatus = 'pending' | 'negotiating' | 'accepted' | 'inProgress' | 'completed' | 'cancelled';
+export type OfferStatus = 'pending' | 'accepted' | 'rejected';
 
 export interface Order {
   id: string;
   fromAddress: string;
   toAddress: string;
   price?: number;
+  finalPrice?: number;
   status: OrderStatus;
+  comment?: string;
   passengerId: string;
   driverId?: string;
   createdAt: string;
+  updatedAt: string;
   startedAt?: string;
   completedAt?: string;
+  offers: PriceOffer[];
+  messages: Message[];
 }
-
-export type OrderStatus = 'pending' | 'accepted' | 'started' | 'completed' | 'cancelled';
 
 export interface PriceOffer {
   id: string;
   orderId: string;
   driverId: string;
   price: number;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: OfferStatus;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface Message {
@@ -45,4 +58,11 @@ export interface Message {
   userId: string;
   text: string;
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateProfileDTO {
+  role: Role;
+  carModel?: string;
+  carNumber?: string;
 }

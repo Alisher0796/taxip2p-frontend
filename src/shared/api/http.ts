@@ -1,8 +1,13 @@
-import type { Order, OrderStatus, PriceOffer, Message } from '@/shared/types/api';
+import type { Order, OrderStatus, PriceOffer, Message, Profile } from '@/shared/types/api';
+import type { TelegramWebApp } from '@/shared/types/telegram';
 import WebApp from '@twa-dev/sdk';
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') || '';
 const API_PREFIX = '/api';
+
+if (!BASE_URL) {
+  throw new Error('VITE_API_URL is not defined');
+}
 
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -19,23 +24,17 @@ export const createHttp = () => {
       ...headers,
     };
 
-    let initData = WebApp.initData;
-    let user = WebApp.initDataUnsafe?.user;
-    let attempts = 0;
-
-    while ((!initData || !user) && attempts < 3) {
-      console.log(`Attempt ${attempts + 1} to get WebApp data...`);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      initData = WebApp.initData;
-      user = WebApp.initDataUnsafe?.user;
-      attempts++;
-    }
-
-    console.log('WebApp data:', { initData, user, attempts });
-
-    if (!initData || !user) {
+    const webApp = (WebApp as unknown) as TelegramWebApp;
+    
+    if (!webApp?.initData || !webApp?.initDataUnsafe?.user) {
+      console.error('WebApp initialization error:', { 
+        initData: webApp?.initData,
+        user: webApp?.initDataUnsafe?.user 
+      });
       throw new Error('Ошибка авторизации Telegram');
     }
+
+    const { initData } = webApp;
 
     requestHeaders['x-telegram-init-data'] = initData;
 
@@ -91,9 +90,9 @@ const http = createHttp();
 
 export const api = {
   // Профиль
-  getProfile: () => http<{ role: 'driver' | 'passenger' | null }>('/profile'),
+  getProfile: () => http<Profile>('/profile'),
   updateProfile: (data: UpdateProfileDTO) =>
-    http<{ role: 'driver' | 'passenger' }>('/profile', { method: 'PUT', body: data }),
+    http<Profile>('/profile', { method: 'PUT', body: data }),
 
   // Заказы
   getOrders: (status?: OrderStatus) =>

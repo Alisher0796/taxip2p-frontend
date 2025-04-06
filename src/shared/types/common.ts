@@ -3,17 +3,20 @@ export type Optional<T> = T | undefined;
 
 export type Role = 'passenger' | 'driver';
 
-export interface User {
+export interface Car {
+  model: string;
+  licensePlate: string;
+}
+
+export interface BaseUser {
   id: string;
   telegramId: string;
   username: string;
   role: Role | null;
-  car?: {
-    model: string;
-    licensePlate: string;
-  };
+  car?: Car;
+}
+
+export interface User extends BaseUser {
   createdAt: string;
   updatedAt: string;
 }
-
-

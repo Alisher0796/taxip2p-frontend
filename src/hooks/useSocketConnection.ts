@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { createSocket } from '@/shared/api/socket'
 import { useUserStore } from '@/entities/user/model/store'
 
-export const useSocket = (): ReturnType<typeof createSocket> | null => {
+export const useSocketConnection = (): ReturnType<typeof createSocket> | null => {
   const user = useUserStore((state) => state.user)
   const [socket, setSocket] = useState<ReturnType<typeof createSocket> | null>(null)
 

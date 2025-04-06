@@ -64,6 +64,8 @@ export interface HapticFeedback {
 }
 
 // Основной интерфейс Telegram WebApp
+export type WebAppEventType = 'themeChanged' | 'viewportChanged' | 'mainButtonClicked' | 'backButtonClicked';
+
 export interface TelegramWebApp {
   initData: string
   initDataUnsafe: {
@@ -85,6 +87,13 @@ export interface TelegramWebApp {
   setBackgroundColor: (color: string) => void
   showConfirm: (message: string) => Promise<boolean>
   showAlert: (message: string) => Promise<void>
+  onEvent: (eventType: WebAppEventType, callback: () => void) => void
+  offEvent: (eventType: WebAppEventType, callback: () => void) => void
+  platform: string
+  version: string
+  isExpanded: boolean
+  viewportHeight: number
+  viewportStableHeight: number
 }
 
 // Экспортируем тип, если нужно использовать как переменную где-то
