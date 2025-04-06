@@ -1,9 +1,8 @@
 import type { Order, OrderStatus, PriceOffer, Message } from '@/shared/types/api';
 import WebApp from '@twa-dev/sdk';
 
-const BASE_URL = import.meta.env.VITE_API_URL;
-const API_URL = `${BASE_URL}/api`;
-console.log('API URLs:', { BASE_URL, API_URL }); // Проверяем URL
+const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') || '';
+const API_PREFIX = '/api';
 
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -20,12 +19,10 @@ export const createHttp = () => {
       ...headers,
     };
 
-    // Получаем initData из WebApp
     let initData = WebApp.initData;
     let user = WebApp.initDataUnsafe?.user;
     let attempts = 0;
-    
-    // Пробуем получить данные несколько раз
+
     while ((!initData || !user) && attempts < 3) {
       console.log(`Attempt ${attempts + 1} to get WebApp data...`);
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -33,29 +30,19 @@ export const createHttp = () => {
       user = WebApp.initDataUnsafe?.user;
       attempts++;
     }
-    
+
     console.log('WebApp data:', { initData, user, attempts });
-    
+
     if (!initData || !user) {
-      console.warn('WebApp initData or user is empty after retries', { initData, user });
       throw new Error('Ошибка авторизации Telegram');
     }
 
-    // Добавляем initData в заголовки, если они не были добавлены
-    if (!headers['x-telegram-init-data']) {
-      requestHeaders['x-telegram-init-data'] = initData;
-    }
-    const fullUrl = `${API_URL}${endpoint}`;
-    console.log('Request:', { 
-      baseUrl: API_URL,
-      endpoint,
-      fullUrl,
-      method, 
-      initData, 
-      user 
-    });
+    requestHeaders['x-telegram-init-data'] = initData;
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const fullUrl = `${BASE_URL}${API_PREFIX}${endpoint}`;
+    console.log('Request to API:', { method, fullUrl, body });
+
+    const response = await fetch(fullUrl, {
       method,
       headers: requestHeaders,
       body: body ? JSON.stringify(body) : undefined,
@@ -64,14 +51,9 @@ export const createHttp = () => {
     if (!response.ok) {
       console.error('HTTP Error:', {
         status: response.status,
-        statusText: response.statusText,
         url: response.url,
-        headers: Object.fromEntries(response.headers.entries())
+        headers: Object.fromEntries(response.headers.entries()),
       });
-
-      if (response.status === 401) {
-        throw new Error('Ошибка авторизации Telegram');
-      }
 
       const error = await response.json().catch(() => ({ message: 'Неизвестная ошибка' }));
       throw new Error(error.message || 'Что-то пошло не так');
@@ -110,22 +92,32 @@ const http = createHttp();
 export const api = {
   // Профиль
   getProfile: () => http<{ role: 'driver' | 'passenger' | null }>('/profile'),
-  updateProfile: (data: UpdateProfileDTO) => http<{ role: 'driver' | 'passenger' }>('/profile', { method: 'PUT', body: data }),
+  updateProfile: (data: UpdateProfileDTO) =>
+    http<{ role: 'driver' | 'passenger' }>('/profile', { method: 'PUT', body: data }),
 
   // Заказы
-  getOrders: (status?: OrderStatus) => http<Order[]>(`/orders${status ? `?status=${status}` : ''}`),
+  getOrders: (status?: OrderStatus) =>
+    http<Order[]>(`/orders${status ? `?status=${status}` : ''}`),
   getOrder: (id: string) => http<Order>(`/orders/${id}`),
-  createOrder: (data: CreateOrderDTO) => http<Order>('/orders', { method: 'POST', body: data }),
-  updateOrder: (id: string, data: UpdateOrderDTO) => http<Order>(`/orders/${id}`, { method: 'PUT', body: data }),
+  createOrder: (data: CreateOrderDTO) =>
+    http<Order>('/orders', { method: 'POST', body: data }),
+  updateOrder: (id: string, data: UpdateOrderDTO) =>
+    http<Order>(`/orders/${id}`, { method: 'PUT', body: data }),
 
   // Предложения цены
-  getOffers: (orderId: string) => http<PriceOffer[]>(`/orders/${orderId}/offers`),
-  createOffer: (data: CreateOfferDTO) => http<PriceOffer>('/offers', { method: 'POST', body: data }),
+  getOffers: (orderId: string) =>
+    http<PriceOffer[]>(`/orders/${orderId}/offers`),
+  createOffer: (data: CreateOfferDTO) =>
+    http<PriceOffer>('/offers', { method: 'POST', body: data }),
   updateOffer: (id: string, data: { status: 'accepted' | 'rejected' }) =>
     http<PriceOffer>(`/offers/${id}`, { method: 'PUT', body: data }),
 
   // Чат
-  getMessages: (orderId: string) => http<Message[]>(`/orders/${orderId}/messages`),
+  getMessages: (orderId: string) =>
+    http<Message[]>(`/orders/${orderId}/messages`),
   sendMessage: (orderId: string, text: string) =>
-    http<Message>(`/orders/${orderId}/messages`, { method: 'POST', body: { text } }),
+    http<Message>(`/orders/${orderId}/messages`, {
+      method: 'POST',
+      body: { text },
+    }),
 } as const;
