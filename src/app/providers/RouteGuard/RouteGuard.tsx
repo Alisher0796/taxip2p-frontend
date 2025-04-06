@@ -29,6 +29,15 @@ export function RouteGuard({ children, requiredRole }: RouteGuardProps) {
       try {
         const profile = await api.getProfile();
 
+        // Profile doesn't exist
+        if (!profile) {
+          return {
+            isAllowed: false,
+            profile: null,
+            error: 'Profile not found',
+          };
+        }
+
         // No role assigned
         if (!profile.role) {
           return {
@@ -65,7 +74,7 @@ export function RouteGuard({ children, requiredRole }: RouteGuardProps) {
       if (!result.isAllowed) {
         console.error('Access check failed:', result.error);
         haptic?.notification('error');
-        navigate('/', { replace: true });
+        navigate('/role', { replace: true });
       }
       setIsChecking(false);
     });
