@@ -2,6 +2,7 @@ import type { Order, OrderStatus, PriceOffer, Message } from '@/shared/types/api
 import WebApp from '@twa-dev/sdk';
 
 const API_URL = import.meta.env.VITE_API_URL;
+console.log('API_URL:', API_URL); // Проверяем базовый URL
 
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -43,7 +44,15 @@ export const createHttp = () => {
     if (!headers['x-telegram-init-data']) {
       requestHeaders['x-telegram-init-data'] = initData;
     }
-    console.log('Request:', { endpoint, method, initData, user });
+    const fullUrl = `${API_URL}${endpoint}`;
+    console.log('Request:', { 
+      baseUrl: API_URL,
+      endpoint,
+      fullUrl,
+      method, 
+      initData, 
+      user 
+    });
 
     const response = await fetch(`${API_URL}${endpoint}`, {
       method,
