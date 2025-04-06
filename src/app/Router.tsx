@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
-import { LoadingScreen } from '@/shared/ui'
+import { LoadingScreen } from '@/shared/ui/LoadingScreen'
+import { RouteGuard } from './providers/RouteGuard/RouteGuard'
 
 const RoleSelectPage = lazy(() => import('@/pages/RoleSelectPage'))
 const PassengerCreatePage = lazy(() => import('@/pages/passenger'))
@@ -14,10 +15,43 @@ export function Router() {
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
         <Route path="/" element={<RoleSelectPage />} />
-        <Route path="/passenger" element={<PassengerCreatePage />} />
-        <Route path="/passenger/active" element={<PassengerActivePage />} />
-        <Route path="/driver" element={<DriverRequestsPage />} />
-        <Route path="/driver/active" element={<DriverActivePage />} />
+        
+        {/* Маршруты для пассажира */}
+        <Route
+          path="/passenger"
+          element={
+            <RouteGuard requiredRole="passenger">
+              <PassengerCreatePage />
+            </RouteGuard>
+          }
+        />
+        <Route
+          path="/passenger/active"
+          element={
+            <RouteGuard requiredRole="passenger">
+              <PassengerActivePage />
+            </RouteGuard>
+          }
+        />
+
+        {/* Маршруты для водителя */}
+        <Route
+          path="/driver"
+          element={
+            <RouteGuard requiredRole="driver">
+              <DriverRequestsPage />
+            </RouteGuard>
+          }
+        />
+        <Route
+          path="/driver/active"
+          element={
+            <RouteGuard requiredRole="driver">
+              <DriverActivePage />
+            </RouteGuard>
+          }
+        />
+
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>

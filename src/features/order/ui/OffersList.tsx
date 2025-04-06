@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOrderStore } from '../model/store';
 import { api } from '@/shared/api/http';
-import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider';
+import { useTelegram } from '@/app/providers/TelegramProvider';
 import WebApp from '@twa-dev/sdk';
 import type { PriceOffer } from '@/shared/types/api';
 

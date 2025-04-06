@@ -1,3 +1,4 @@
+export { TelegramProvider } from './TelegramProvider'
 export { TelegramContext } from './context'
-export type { TelegramContextType } from './types'
-export { TelegramProvider, useTelegram } from './TelegramProvider'
+export type { TelegramContextType, WebAppUser, HapticFeedback } from './types'
+export { useTelegram } from './hooks'

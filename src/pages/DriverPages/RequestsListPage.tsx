@@ -5,7 +5,7 @@ import { RequestCard } from '@/widgets/RequestCard';
 import { useOrderStore } from '@/features/order/model/store';
 import { useSocket } from '@/app/providers/SocketProvider';
 import { Order, OrderStatus } from '@/shared/types/api';
-import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider';
+import { useTelegram } from '@/app/providers/TelegramProvider';
 
 export const RequestsListPage = () => {
   const { socket } = useSocket();

@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/ui/Button/Button'
 import { Role } from '@/shared/types/common'
 import { createHttp } from '@/shared/api/http'
-import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider'
+import { useTelegram } from '@/app/providers/TelegramProvider'
 import { useEffect, useState } from 'react'
 
 const RoleSelectPage = () => {

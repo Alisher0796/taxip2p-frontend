@@ -5,7 +5,7 @@ import { CreateOrderForm } from '@/features/order/ui/CreateOrderForm';
 import { useOrderStore } from '@/features/order/model/store';
 import { api } from '@/shared/api/http';
 import type { CreateOrderDTO } from '@/shared/api/http';
-import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider';
+import { useTelegram } from '@/app/providers/TelegramProvider';
 
 export default function PassengerPage() {
   const navigate = useNavigate();

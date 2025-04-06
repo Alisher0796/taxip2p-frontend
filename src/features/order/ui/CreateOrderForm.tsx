@@ -5,7 +5,7 @@ import WebApp from '@twa-dev/sdk';
 import { createOrderSchema } from '../lib/schema';
 import { Input, Textarea } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button/Button';
-import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider';
+import { useTelegram } from '@/app/providers/TelegramProvider';
 
 type FormData = {
   fromAddress: string;

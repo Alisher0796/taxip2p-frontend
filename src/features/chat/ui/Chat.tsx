@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSocket } from '@/app/providers/SocketProvider';
 import { api } from '@/shared/api/http';
-import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider';
+import { useTelegram } from '@/app/providers/TelegramProvider';
 import WebApp from '@twa-dev/sdk';
 
 interface Props {

@@ -1,93 +1,136 @@
-import { ReactNode, useContext, useEffect, useState } from 'react'
+import { ReactNode, useCallback, useEffect, useState } from 'react'
 import WebApp from '@twa-dev/sdk'
 import { TelegramContext } from './context'
-import type { WebAppUser } from './types'
+import { LoadingScreen } from '@/shared/ui/LoadingScreen'
+import { WebAppUser } from './types'
 
-export function useTelegram() {
-  const context = useContext(TelegramContext)
-  if (!context) {
-    throw new Error('useTelegram must be used within TelegramProvider')
-  }
-  return context
-}
-
-export interface TelegramProviderProps {
+interface TelegramProviderProps {
   children: ReactNode
 }
 
+const MAX_INIT_ATTEMPTS = 5
+const INIT_RETRY_DELAY = 500
+
 export function TelegramProvider({ children }: TelegramProviderProps) {
-  const [isReady, setIsReady] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
+  const [initError, setInitError] = useState<Error | null>(null)
+  const [initAttempts, setInitAttempts] = useState(0)
   const [user, setUser] = useState<WebAppUser | null>(null)
 
+  const checkWebApp = useCallback(() => {
+    const userExists = !!WebApp?.initDataUnsafe?.user
+    const initDataPresent = !!WebApp?.initData
+    return userExists && initDataPresent
+  }, [])
+
   useEffect(() => {
-    const initWebApp = () => {
-      if (!WebApp?.initDataUnsafe?.user) {
-        console.warn('[TelegramProvider] WebApp.initDataUnsafe.user is missing', {
-          initData: WebApp?.initData,
-          user: WebApp?.initDataUnsafe?.user
-        })
-        return
+    const initializeWebApp = async () => {
+      try {
+        if (checkWebApp()) {
+          const webAppUser = WebApp.initDataUnsafe?.user
+          
+          console.log('WebApp initialized:', {
+            initData: WebApp.initData,
+            user: webAppUser,
+          })
+
+          if (webAppUser) {
+            setUser(webAppUser)
+          }
+
+          WebApp.ready()
+          WebApp.expand()
+          setIsInitialized(true)
+          return
+        }
+
+        if (initAttempts >= MAX_INIT_ATTEMPTS) {
+          throw new Error('Failed to initialize Telegram WebApp')
+        }
+
+        const timeoutId = setTimeout(() => {
+          setInitAttempts(prev => prev + 1)
+        }, INIT_RETRY_DELAY)
+
+        return () => clearTimeout(timeoutId)
+      } catch (error) {
+        console.error('WebApp initialization error:', error)
+        setInitError(error instanceof Error ? error : new Error('Unknown error'))
       }
-
-      setIsReady(true)
-      setUser(WebApp.initDataUnsafe.user)
-
-      WebApp.ready()
-      WebApp.expand()
-
-      console.log('[TelegramProvider] Telegram WebApp initialized:', {
-        initData: WebApp.initData,
-        user: WebApp.initDataUnsafe.user,
-      })
     }
 
-    initWebApp()
+    if (!isInitialized && !initError) {
+      initializeWebApp()
+    }
+  }, [checkWebApp, initAttempts, isInitialized, initError])
 
-    return () => {
-      try {
-        WebApp.MainButton.hide()
-        WebApp.BackButton.hide()
-        WebApp.MainButton.offClick?.(() => {})
-        WebApp.BackButton.offClick?.(() => {})
-      } catch (error) {
-        console.warn('[TelegramProvider] Cleanup error:', error)
-      }
+  const hideBackButton = useCallback(() => {
+    if (WebApp?.BackButton) {
+      WebApp.BackButton.hide()
     }
   }, [])
 
-  const haptic = {
+  const showBackButton = useCallback(() => {
+    if (WebApp?.BackButton) {
+      WebApp.BackButton.show()
+    }
+  }, [])
+
+  const hideMainButton = useCallback(() => {
+    if (WebApp?.MainButton) {
+      WebApp.MainButton.hide()
+    }
+  }, [])
+
+  const showMainButton = useCallback(() => {
+    if (WebApp?.MainButton) {
+      WebApp.MainButton.show()
+    }
+  }, [])
+
+  const haptic = WebApp?.HapticFeedback ? {
     impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
-      try {
-        WebApp.HapticFeedback?.impactOccurred(style)
-      } catch (error) {
-        console.warn('[TelegramProvider] Haptic impact error:', error)
-      }
+      WebApp.HapticFeedback?.impactOccurred(style)
     },
     notification: (type: 'error' | 'success' | 'warning') => {
-      try {
-        WebApp.HapticFeedback?.notificationOccurred(type)
-      } catch (error) {
-        console.warn('[TelegramProvider] Haptic notification error:', error)
-      }
+      WebApp.HapticFeedback?.notificationOccurred(type)
     },
+  } : undefined
+
+  if (initError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
+        <div className="max-w-md rounded-lg bg-white p-6 text-center shadow-lg">
+          <h1 className="mb-4 text-xl font-bold text-gray-800">
+            Ошибка инициализации
+          </h1>
+          <p className="text-gray-600">{initError.message}</p>
+          <button
+            onClick={() => window.location.href = 'https://t.me/taxip2p_bot'}
+            className="mt-6 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+          >
+            Открыть в Telegram
+          </button>
+        </div>
+      </div>
+    )
   }
 
-  const showMainButton = () => WebApp.MainButton?.show()
-  const hideMainButton = () => WebApp.MainButton?.hide()
-  const showBackButton = () => WebApp.BackButton?.show()
-  const hideBackButton = () => WebApp.BackButton?.hide()
+  if (!isInitialized) {
+    return <LoadingScreen />
+  }
 
   return (
     <TelegramContext.Provider
       value={{
+        isReady: isInitialized,
         webApp: WebApp,
         user,
-        isReady,
-        haptic,
-        showMainButton,
-        hideMainButton,
-        showBackButton,
         hideBackButton,
+        showBackButton,
+        hideMainButton,
+        showMainButton,
+        haptic,
       }}
     >
       {children}

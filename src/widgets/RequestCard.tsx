@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider';
+import { useTelegram } from '@/app/providers/TelegramProvider';
 import WebApp from '@twa-dev/sdk';
 import type { Order } from '@/shared/types/api';
 

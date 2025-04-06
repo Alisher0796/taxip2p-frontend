@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider'
+import { useTelegram } from '@/app/providers/TelegramProvider'
 import { Message as MessageType } from './types'
 import dayjs from 'dayjs'
 

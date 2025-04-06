@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '@/entities/user/model/store';
 import { useOrderStore } from '@/features/order/model/store';
 import { api } from '@/shared/api/http';
-import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider';
+import { useTelegram } from '@/app/providers/TelegramProvider';
 import WebApp from '@twa-dev/sdk';
 import type { Order, OrderStatus } from '@/shared/types/api';
 

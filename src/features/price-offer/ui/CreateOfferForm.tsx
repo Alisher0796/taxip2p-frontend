@@ -5,7 +5,7 @@ import WebApp from '@twa-dev/sdk';
 import { createOfferSchema } from '../lib/schema';
 import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
-import { useTelegram } from '@/app/providers/TelegramProvider/TelegramProvider';
+import { useTelegram } from '@/app/providers/TelegramProvider';
 
 interface FormData {
   price: number;
