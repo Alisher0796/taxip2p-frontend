@@ -42,7 +42,7 @@ export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectE
   placeholder?: string;
 }
 
-export const Select = forwardRef<HTMLSelectElement, SelectProps>((
+const SelectComponent = forwardRef<HTMLSelectElement, SelectProps>((
   { 
     label, 
     error, 
@@ -51,14 +51,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>((
     description,
     options,
     placeholder,
-    id: providedId,
+    id,
     required,
     'aria-describedby': describedBy,
     ...props 
   }, 
   ref
 ) => {
-  const id = providedId || useId();
   const errorId = error ? `${id}-error` : undefined;
   const descriptionId = description ? `${id}-description` : undefined;
   const ariaDescribedBy = cn(describedBy, errorId, descriptionId);
@@ -120,6 +119,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>((
       )}
     </div>
   );
+});
+
+SelectComponent.displayName = 'Select';
+
+export const Select = forwardRef<HTMLSelectElement, SelectProps>((props, ref) => {
+  const generatedId = useId();
+  return <SelectComponent {...props} id={props.id || generatedId} ref={ref} />;
 });
 
 Select.displayName = 'Select';

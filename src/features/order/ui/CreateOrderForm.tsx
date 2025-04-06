@@ -64,7 +64,7 @@ export const CreateOrderForm = ({ onSubmit, isLoading }: Props) => {
       hideMainButton();
       WebApp.MainButton.offClick(() => {});
     };
-  }, [isValid, formValues, showMainButton, hideMainButton, handleSubmit, onSubmit, isLoading]);
+  }, [isValid, formValues, showMainButton, hideMainButton, handleSubmit, onSubmit, isLoading, haptic]);
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>

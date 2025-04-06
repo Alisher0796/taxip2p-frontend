@@ -38,13 +38,12 @@ const InputComponent = forwardRef<HTMLInputElement, InputProps>((
     className, 
     containerClassName, 
     description,
-    id: providedId,
+    id,
     'aria-describedby': describedBy,
     ...props 
   }, 
   ref
 ) => {
-  const id = providedId || useId();
   const errorId = error ? `${id}-error` : undefined;
   const descriptionId = description ? `${id}-description` : undefined;
   const ariaDescribedBy = cn(describedBy, errorId, descriptionId);
@@ -99,13 +98,12 @@ const TextareaComponent = forwardRef<HTMLTextAreaElement, TextareaProps>((
     className, 
     containerClassName, 
     description,
-    id: providedId,
+    id,
     'aria-describedby': describedBy,
     ...props 
   }, 
   ref
 ) => {
-  const id = providedId || useId();
   const errorId = error ? `${id}-error` : undefined;
   const descriptionId = description ? `${id}-description` : undefined;
   const ariaDescribedBy = cn(describedBy, errorId, descriptionId);
@@ -157,12 +155,15 @@ const TextareaComponent = forwardRef<HTMLTextAreaElement, TextareaProps>((
 InputComponent.displayName = 'Input';
 TextareaComponent.displayName = 'Textarea';
 
-export const Input = InputComponent as {
-  <T extends InputProps>(props: T & { ref?: React.ForwardedRef<HTMLInputElement> }): JSX.Element;
-  displayName: string;
-};
+export const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
+  const generatedId = useId();
+  return <InputComponent {...props} id={props.id || generatedId} ref={ref} />;
+});
 
-export const Textarea = TextareaComponent as {
-  <T extends TextareaProps>(props: T & { ref?: React.ForwardedRef<HTMLTextAreaElement> }): JSX.Element;
-  displayName: string;
-};
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>((props, ref) => {
+  const generatedId = useId();
+  return <TextareaComponent {...props} id={props.id || generatedId} ref={ref} />;
+});
+
+Input.displayName = 'Input';
+Textarea.displayName = 'Textarea';
