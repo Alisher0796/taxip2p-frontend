@@ -12,8 +12,21 @@ export function App() {
 
   React.useEffect(() => {
     // Проверяем наличие WebApp
-    const isWebApp = !!WebApp?.initDataUnsafe?.user;
-    setIsWebView(isWebApp);
+    const checkWebApp = () => {
+      const isWebApp = !!WebApp?.initDataUnsafe?.user;
+      console.log('Checking WebApp:', { 
+        initData: WebApp.initData,
+        user: WebApp.initDataUnsafe?.user,
+        isWebApp
+      });
+      setIsWebView(isWebApp);
+    };
+
+    // Проверяем сразу и через небольшую задержку
+    checkWebApp();
+    const timer = setTimeout(checkWebApp, 1000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   if (!isWebView) {

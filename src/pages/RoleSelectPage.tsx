@@ -56,6 +56,10 @@ const RoleSelectPage = () => {
       console.log('Setting role in store...');
       setRole(role);
       haptic.notification('success');
+
+      // Навигация на соответствующую страницу
+      console.log('Navigating to:', role === 'passenger' ? '/passenger' : '/driver');
+      navigate(role === 'passenger' ? '/passenger' : '/driver', { replace: true });
     } catch (error) {
       console.error('Error updating role:', error);
       

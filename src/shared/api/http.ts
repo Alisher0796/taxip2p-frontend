@@ -19,13 +19,23 @@ export const createHttp = () => {
     };
 
     // Получаем initData из WebApp
-    const initData = WebApp.initData;
-    const user = WebApp.initDataUnsafe?.user;
+    let initData = WebApp.initData;
+    let user = WebApp.initDataUnsafe?.user;
+    let attempts = 0;
     
-    console.log('WebApp data:', { initData, user });
+    // Пробуем получить данные несколько раз
+    while ((!initData || !user) && attempts < 3) {
+      console.log(`Attempt ${attempts + 1} to get WebApp data...`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      initData = WebApp.initData;
+      user = WebApp.initDataUnsafe?.user;
+      attempts++;
+    }
+    
+    console.log('WebApp data:', { initData, user, attempts });
     
     if (!initData || !user) {
-      console.warn('WebApp initData or user is empty', { initData, user });
+      console.warn('WebApp initData or user is empty after retries', { initData, user });
       throw new Error('Ошибка авторизации Telegram');
     }
 
