@@ -27,9 +27,20 @@ export function RouteGuard({ children, requiredRole }: RouteGuardProps) {
 
     const checkAccess = async (): Promise<AccessCheckResult> => {
       try {
-        const profile = await api.getProfile();
+        let profile: Profile | null = null;
 
-        // Profile doesn't exist
+        try {
+          profile = await api.getProfile();
+        } catch (error) {
+          if (error instanceof Error && error.message === 'Profile not found') {
+            // If no profile exists, create one
+            profile = await api.updateProfile({ role: 'passenger' });
+          } else {
+            throw error;
+          }
+        }
+
+        // Profile doesn't exist (this shouldn't happen after the above)
         if (!profile) {
           return {
             isAllowed: false,
