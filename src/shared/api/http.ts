@@ -1,8 +1,9 @@
 import type { Order, OrderStatus, PriceOffer, Message } from '@/shared/types/api';
 import WebApp from '@twa-dev/sdk';
 
-const API_URL = import.meta.env.VITE_API_URL;
-console.log('API_URL:', API_URL); // Проверяем базовый URL
+const BASE_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${BASE_URL}/api`;
+console.log('API URLs:', { BASE_URL, API_URL }); // Проверяем URL
 
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
