@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useSocket } from '@/app/providers/SocketProvider'
 import { useTelegram } from '@/app/providers/TelegramProvider'
 import { Message } from './Message'
@@ -16,12 +16,12 @@ export const Chat = ({ orderId }: ChatProps) => {
   const [error, setError] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  const handleNewMessage = (message: MessageType) => {
+  const handleNewMessage = useCallback((message: MessageType) => {
     setMessages((prev) => [...prev, message])
     if (webApp?.platform && ['tdesktop', 'android', 'ios'].includes(webApp.platform)) {
       haptic?.notification('success')
     }
-  }
+  }, [webApp, haptic])
 
   // Подключение к комнате чата
   useEffect(() => {
@@ -41,7 +41,7 @@ export const Chat = ({ orderId }: ChatProps) => {
       socket.off('error')
       socket.emit('leave', { orderId })
     }
-  }, [socket, orderId])
+  }, [socket, orderId, handleNewMessage])
 
   // Автоскролл при новых сообщениях
   useEffect(() => {

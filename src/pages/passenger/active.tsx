@@ -110,7 +110,7 @@ export default function ActiveOrderPage() {
     return () => {
       socket.off('order:updated');
     };
-  }, [socket, user, navigate, setCurrentOrder, haptic]);
+  }, [socket, user, navigate, setCurrentOrder, haptic, currentOrder?.id]);
 
   useEffect(() => {
     if (!user || user.role !== 'passenger') {

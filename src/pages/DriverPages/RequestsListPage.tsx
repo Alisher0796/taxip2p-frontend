@@ -48,7 +48,7 @@ export const RequestsListPage = () => {
       socket.off('order:new');
       socket.off('order:updated');
     };
-  }, [socket, setActiveOrders, orders]);
+  }, [socket, setActiveOrders, orders, haptic]);
 
   if (isLoading) {
     return <div className="p-4">Загрузка...</div>;
