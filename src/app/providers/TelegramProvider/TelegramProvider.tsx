@@ -17,26 +17,19 @@ export interface TelegramProviderProps {
 export function TelegramProvider({ children }: TelegramProviderProps) {
   const [isReady, setIsReady] = useState(false)
 
+  // Инициализируем состояние сразу
   useEffect(() => {
-    const initializeWebApp = () => {
-      try {
-        // Проверяем, что приложение запущено в Telegram
-        if (!WebApp.initData) {
-          console.warn('WebApp initData is empty. Make sure the app is running inside Telegram.')
-          return
-        }
-
-        // Инициализация Telegram WebApp
-        WebApp.ready()
-        WebApp.expand()
-        setIsReady(true)
-      } catch (error) {
-        console.error('Error initializing Telegram WebApp:', error)
+    try {
+      // Проверяем, что приложение запущено в Telegram
+      if (!WebApp.initData) {
+        console.warn('WebApp initData is empty')
+        return
       }
-    }
 
-    // Запускаем инициализацию сразу
-    initializeWebApp()
+      setIsReady(true)
+    } catch (error) {
+      console.error('Error initializing Telegram WebApp:', error)
+    }
 
     // Очистка при размонтировании
     return () => {
