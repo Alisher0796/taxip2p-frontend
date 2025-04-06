@@ -48,7 +48,7 @@ export function useTelegramNavigation() {
     webApp.BackButton.onClick(handleBackClick);
 
     return () => {
-      webApp.BackButton.offClick(handleBackClick);
+      webApp.BackButton.onClick(handleBackClick);
     };
   }, [location.pathname, webApp, isReady, handleBackClick, canGoBack]);
 

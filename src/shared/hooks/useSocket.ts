@@ -14,7 +14,7 @@ export function useSocket(socket: ReturnType<typeof io> | null) {
       return () => {};
     }
 
-    const handler = (response: SocketResponse<P>) => {
+    const handler = (response: SocketResponse<E, P>) => {
       try {
         callback(response.data);
       } catch (error) {
@@ -74,6 +74,7 @@ export function useSocket(socket: ReturnType<typeof io> | null) {
   }, [socket]);
 
   return {
+    socket,
     subscribe,
     emit,
     isConnected: socket?.connected ?? false,

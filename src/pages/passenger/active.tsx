@@ -6,7 +6,8 @@ import { api } from '@/shared/api/http';
 import { useTelegram } from '@/app/providers/TelegramProvider';
 import WebApp from '@twa-dev/sdk';
 import type { Order, OrderStatus } from '@/shared/types/api';
-import { useSocket } from '@/app/providers/SocketProvider';
+import { useContext } from 'react';
+import { SocketContext } from '@/app/providers/SocketProvider/context';
 import { OffersList } from '@/features/order/ui/OffersList';
 import { Chat } from '@/features/chat/ui/Chat';
 
@@ -55,7 +56,7 @@ export default function ActiveOrderPage() {
   const user = useUserStore((state) => state.user);
   const { currentOrder, setCurrentOrder } = useOrderStore();
   const { showBackButton, hideBackButton, haptic, hideMainButton } = useTelegram();
-  const { socket } = useSocket();
+  const { socket } = useContext(SocketContext);
 
   useEffect(() => {
     if (!user || user.role !== 'passenger') {

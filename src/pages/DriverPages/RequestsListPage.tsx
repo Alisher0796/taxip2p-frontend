@@ -3,12 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/shared/api/http';
 import { RequestCard } from '@/widgets/RequestCard';
 import { useOrderStore } from '@/features/order/model/store';
-import { useSocket } from '@/app/providers/SocketProvider';
+import { useContext } from 'react';
+import { SocketContext } from '@/app/providers/SocketProvider/context';
 import { Order, OrderStatus } from '@/shared/types/api';
 import { useTelegram } from '@/app/providers/TelegramProvider';
 
 export const RequestsListPage = () => {
-  const { socket } = useSocket();
+  const { socket } = useContext(SocketContext);
   const setActiveOrders = useOrderStore((state) => state.setActiveOrders);
   const { showBackButton, hideMainButton, haptic } = useTelegram();
 

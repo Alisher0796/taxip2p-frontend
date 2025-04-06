@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { useSocket } from '@/app/providers/SocketProvider';
+import { useContext } from 'react';
+import { SocketContext } from '@/app/providers/SocketProvider/context';
 import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '@/entities/user/model/store';
 import { useOrderStore } from '@/features/order/model/store';
@@ -56,7 +57,7 @@ export default function DriverActivePage() {
   const { currentOrder, setCurrentOrder } = useOrderStore();
   const { haptic, hideMainButton } = useTelegram();
 
-  const { socket } = useSocket();
+  const { socket } = useContext(SocketContext);
 
   useEffect(() => {
     if (!user || user.role !== 'driver') {

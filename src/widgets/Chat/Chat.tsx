@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useSocket } from '@/app/providers/SocketProvider'
+import { useContext } from 'react';
+import { SocketContext } from '@/app/providers/SocketProvider/context';
 import { useTelegram } from '@/app/providers/TelegramProvider'
 import { Message } from './Message'
 import { MessageInput } from './MessageInput'
@@ -10,7 +11,7 @@ interface ChatProps {
 }
 
 export const Chat = ({ orderId }: ChatProps) => {
-  const { socket } = useSocket()
+  const { socket } = useContext(SocketContext);
   const { haptic, webApp } = useTelegram()
   const [messages, setMessages] = useState<MessageType[]>([])
   const [error, setError] = useState<string | null>(null)

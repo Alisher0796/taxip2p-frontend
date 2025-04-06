@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { useSocket } from '@/app/providers/SocketProvider'
+import { useContext } from 'react';
+import { SocketContext } from '@/app/providers/SocketProvider/context';
 import { useTelegram } from '@/app/providers/TelegramProvider'
 import { Message } from './ui/Message'
 import { MessageInput } from './ui/MessageInput'
@@ -10,7 +11,7 @@ interface ChatProps {
 }
 
 export function Chat({ orderId }: ChatProps) {
-  const { socket } = useSocket()
+  const { socket } = useContext(SocketContext);
   const { haptic } = useTelegram()
   const [messages, setMessages] = useState<MessageType[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
