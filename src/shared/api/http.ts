@@ -99,23 +99,23 @@ const http = createHttp();
 
 export const api = {
   // Профиль
-  getProfile: () => http<{ role: 'driver' | 'passenger' | null }>('/api/profile'),
-  updateProfile: (data: UpdateProfileDTO) => http<{ role: 'driver' | 'passenger' }>('/api/profile', { method: 'PUT', body: data }),
+  getProfile: () => http<{ role: 'driver' | 'passenger' | null }>('/profile'),
+  updateProfile: (data: UpdateProfileDTO) => http<{ role: 'driver' | 'passenger' }>('/profile', { method: 'PUT', body: data }),
 
   // Заказы
-  getOrders: (status?: OrderStatus) => http<Order[]>(`/api/orders${status ? `?status=${status}` : ''}`),
-  getOrder: (id: string) => http<Order>(`/api/orders/${id}`),
-  createOrder: (data: CreateOrderDTO) => http<Order>('/api/orders', { method: 'POST', body: data }),
-  updateOrder: (id: string, data: UpdateOrderDTO) => http<Order>(`/api/orders/${id}`, { method: 'PUT', body: data }),
+  getOrders: (status?: OrderStatus) => http<Order[]>(`/orders${status ? `?status=${status}` : ''}`),
+  getOrder: (id: string) => http<Order>(`/orders/${id}`),
+  createOrder: (data: CreateOrderDTO) => http<Order>('/orders', { method: 'POST', body: data }),
+  updateOrder: (id: string, data: UpdateOrderDTO) => http<Order>(`/orders/${id}`, { method: 'PUT', body: data }),
 
   // Предложения цены
-  getOffers: (orderId: string) => http<PriceOffer[]>(`/api/orders/${orderId}/offers`),
-  createOffer: (data: CreateOfferDTO) => http<PriceOffer>('/api/offers', { method: 'POST', body: data }),
+  getOffers: (orderId: string) => http<PriceOffer[]>(`/orders/${orderId}/offers`),
+  createOffer: (data: CreateOfferDTO) => http<PriceOffer>('/offers', { method: 'POST', body: data }),
   updateOffer: (id: string, data: { status: 'accepted' | 'rejected' }) =>
-    http<PriceOffer>(`/api/offers/${id}`, { method: 'PUT', body: data }),
+    http<PriceOffer>(`/offers/${id}`, { method: 'PUT', body: data }),
 
   // Чат
-  getMessages: (orderId: string) => http<Message[]>(`/api/orders/${orderId}/messages`),
+  getMessages: (orderId: string) => http<Message[]>(`/orders/${orderId}/messages`),
   sendMessage: (orderId: string, text: string) =>
-    http<Message>(`/api/orders/${orderId}/messages`, { method: 'POST', body: { text } }),
+    http<Message>(`/orders/${orderId}/messages`, { method: 'POST', body: { text } }),
 } as const;
