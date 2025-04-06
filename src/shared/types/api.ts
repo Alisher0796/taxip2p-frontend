@@ -1,3 +1,9 @@
+/** Интервал подачи машины */
+export type PickupTime =
+  | 'MINS_15'  // Через 15 минут
+  | 'MINS_30'  // Через 30 минут
+  | 'HOUR_1';  // Через 1 час
+
 /** Статусы заказа */
 export type OrderStatus = 
   | 'pending'      // Ожидает предложений
@@ -37,6 +43,7 @@ export interface Order {
   price?: number;
   finalPrice?: number;
   status: OrderStatus;
+  pickupTime: PickupTime;
   comment?: string;
   readonly createdAt: Date;
   readonly updatedAt: Date;
