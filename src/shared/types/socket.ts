@@ -40,7 +40,7 @@ export type SocketData<T extends SocketEvent, P> = {
 };
 
 /** Ответ от сокет-сервера */
-export interface SocketResponse<T = unknown> {
-  readonly event: string;
-  readonly data: T;
+export interface SocketResponse<E extends SocketEvent, P> {
+  readonly event: E;
+  readonly data: P;
 }

@@ -1,32 +1,23 @@
-import { useEffect, useState } from 'react';
-import { useSocket } from '@/app/providers/SocketProvider';
+import { useEffect, useState, useContext } from 'react';
 import { api } from '@/shared/api/http';
 import { useTelegram } from '@/app/providers/TelegramProvider';
 import WebApp from '@twa-dev/sdk';
+import type { Message } from '@/shared/types/api';
+import { SocketContext } from '@/app/providers/SocketProvider/context';
 
 interface Props {
   orderId: string;
 }
 
-interface Message {
-  id: string;
-  text: string;
-  createdAt: string;
-  sender: {
-    id: string;
-    username: string;
-  };
-}
-
 export function Chat({ orderId }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
-  const { socket } = useSocket();
+  const { socket } = useContext(SocketContext);
   const { haptic } = useTelegram();
 
   useEffect(() => {
     // Загружаем историю сообщений
-    api.getMessages(orderId).then(setMessages);
+    api.getMessages(orderId).then((messages) => setMessages(messages));
 
     if (!socket) return;
 

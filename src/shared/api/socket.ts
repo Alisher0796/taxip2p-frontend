@@ -1,5 +1,5 @@
 import io from 'socket.io-client';
-import type { SocketData, SocketResponse } from '@/shared/types/socket';
+import type { SocketEvent, SocketResponse } from '@/shared/types/socket';
 
 type DisconnectReason = string;
 type SocketError = Error;
@@ -37,7 +37,7 @@ export const createSocket = (): ReturnType<typeof io> => {
     console.error('Socket error:', error.message);
   });
 
-  socket.on('message', (response: SocketResponse<SocketData>) => {
+  socket.on('message', (response: SocketResponse<SocketEvent, unknown>) => {
     console.debug('Socket message:', response);
   });
 
