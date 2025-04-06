@@ -12,28 +12,32 @@ const RoleSelectPage = () => {
   const hasNavigated = useRef(false)
 
   useEffect(() => {
-    let cancelled = false
+    const controller = new AbortController()
 
     const checkRole = async () => {
+      if (!isReady || hasNavigated.current) return
+
       try {
         console.log('Checking role...')
         const http = createHttp()
-        const profile = await http<{ role?: Role }>('/profile')
+        const profile = await http<{ role: Role | null }>('/profile')
 
         console.log('Profile response:', profile)
 
-        if (!cancelled && profile?.role && !hasNavigated.current) {
+        if (profile?.role && !hasNavigated.current && !controller.signal.aborted) {
           const nextRoute = profile.role === 'passenger' ? '/passenger' : '/driver'
           console.log('Navigating to:', nextRoute)
           hasNavigated.current = true
           navigate(nextRoute, { replace: true })
         }
       } catch (error) {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           console.error('Error checking role:', error)
         }
       } finally {
-        setIsLoading(false)
+        if (!controller.signal.aborted) {
+          setIsLoading(false)
+        }
       }
     }
 
@@ -44,7 +48,7 @@ const RoleSelectPage = () => {
     }
 
     return () => {
-      cancelled = true
+      controller.abort()
     }
   }, [isReady, navigate, hideBackButton, hideMainButton])
 
