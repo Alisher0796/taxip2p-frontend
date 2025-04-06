@@ -1,9 +1,13 @@
-import { createContext } from 'react'
-import io from 'socket.io-client'
+import { createContext } from 'react';
+import io from 'socket.io-client';
 
-interface SocketContextType {
-  socket: ReturnType<typeof io> | null
-  isConnected: boolean
+/** Контекст сокета */
+export interface SocketContextType {
+  /** Инстанс сокета */
+  socket: ReturnType<typeof io> | null;
+  /** Статус подключения */
+  isConnected: boolean;
 }
 
-export const SocketContext = createContext<SocketContextType | null>(null)
+/** Контекст сокета */
+export const SocketContext = createContext<SocketContextType>({} as SocketContextType);

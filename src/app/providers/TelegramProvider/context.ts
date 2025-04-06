@@ -1,4 +1,5 @@
-import { createContext } from 'react'
-import type { TelegramContextType } from './types'
+import { createContext } from 'react';
+import type { TelegramContextType } from './types';
 
-export const TelegramContext = createContext<TelegramContextType | null>(null)
+/** Контекст Telegram WebApp */
+export const TelegramContext = createContext<TelegramContextType>({} as TelegramContextType);

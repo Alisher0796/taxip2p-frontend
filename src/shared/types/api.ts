@@ -1,57 +1,74 @@
-export type OrderStatus = 'pending' | 'negotiating' | 'accepted' | 'inProgress' | 'completed' | 'cancelled';
-export type OfferStatus = 'pending' | 'accepted' | 'rejected';
+/** Статусы заказа */
+export type OrderStatus = 
+  | 'pending'      // Ожидает предложений
+  | 'negotiating'  // Идет обсуждение цены
+  | 'accepted'     // Заказ принят водителем
+  | 'inProgress'   // Водитель в пути
+  | 'completed'    // Заказ завершен
+  | 'cancelled';   // Заказ отменен
 
+/** Статусы предложения цены */
+export type OfferStatus = 
+  | 'pending'    // Ожидает ответа
+  | 'accepted'   // Принято
+  | 'rejected';  // Отклонено
+
+/** Базовый профиль пользователя */
 export interface Profile {
-  id: string;
-  username: string;
-  telegramId: string;
+  readonly id: string;
+  readonly username: string;
+  readonly telegramId: string;
   role: 'driver' | 'passenger' | null;
   carModel?: string;
   carNumber?: string;
 }
 
+/** Расширенная информация о пользователе */
 export interface User extends Profile {
-  createdAt: string;
-  updatedAt: string;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
 }
 
+/** Заказ на поездку */
 export interface Order {
-  id: string;
-  fromAddress: string;
-  toAddress: string;
+  readonly id: string;
+  readonly fromAddress: string;
+  readonly toAddress: string;
   price?: number;
   finalPrice?: number;
   status: OrderStatus;
   comment?: string;
-  createdAt: string;
-  updatedAt: string;
-  startedAt?: string;
-  completedAt?: string;
-  passenger: User;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+  startedAt?: Date;
+  completedAt?: Date;
+  readonly passenger: User;
   driver?: User;
-  offers: PriceOffer[];
-  messages: Message[];
+  readonly offers: PriceOffer[];
+  readonly messages: Message[];
 }
 
+/** Предложение цены от водителя */
 export interface PriceOffer {
-  id: string;
-  price: number;
+  readonly id: string;
+  readonly price: number;
   status: OfferStatus;
-  createdAt: string;
-  updatedAt: string;
-  order: Order;
-  orderId: string;
-  driver: User;
-  driverId: string;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+  readonly order: Order;
+  readonly orderId: string;
+  readonly driver: User;
+  readonly driverId: string;
 }
 
+/** Сообщение в чате заказа */
 export interface Message {
-  id: string;
-  text: string;
-  createdAt: string;
-  updatedAt: string;
-  order?: Order;
-  orderId?: string;
-  sender: User;
-  senderId?: string;
+  readonly id: string;
+  readonly text: string;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+  readonly order?: Order;
+  readonly orderId?: string;
+  readonly sender: User;
+  readonly senderId?: string;
 }

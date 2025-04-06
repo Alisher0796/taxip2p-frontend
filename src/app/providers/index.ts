@@ -1,3 +1,3 @@
-export * from './TelegramProvider'
-export * from './SocketProvider'
-export * from './QueryProvider'
+export * from './TelegramProvider';
+export * from './SocketProvider';
+export * from './QueryProvider';

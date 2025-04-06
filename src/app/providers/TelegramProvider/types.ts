@@ -1,23 +1,29 @@
-export interface WebAppUser {
-  id: number
-  first_name: string
-  last_name?: string
-  username?: string
-  language_code?: string
-}
+import type { TelegramWebApp, WebAppUser } from '@/shared/types/telegram';
 
 export interface HapticFeedback {
-  impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void
-  notification: (type: 'error' | 'success' | 'warning') => void
+  impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
+  notification: (type: 'error' | 'success' | 'warning') => void;
+  selection: () => void;
 }
 
+/** Контекст Telegram WebApp */
 export interface TelegramContextType {
-  webApp: typeof import('@twa-dev/sdk').default
-  user: WebAppUser | null
-  isReady: boolean
-  haptic: HapticFeedback | undefined
-  showMainButton: () => void
-  hideMainButton: () => void
-  showBackButton: () => void
-  hideBackButton: () => void
+  /** Инстанс WebApp */
+  webApp: TelegramWebApp | null;
+  /** Информация о пользователе */
+  user: WebAppUser | null;
+  /** Статус инициализации */
+  isReady: boolean;
+  /** Тактильная обратная связь */
+  haptic: HapticFeedback | undefined;
+  /** Показать главную кнопку */
+  showMainButton: () => void;
+  /** Скрыть главную кнопку */
+  hideMainButton: () => void;
+  /** Показать кнопку назад */
+  showBackButton: () => void;
+  /** Скрыть кнопку назад */
+  hideBackButton: () => void;
 }
+
+export type { WebAppUser };
