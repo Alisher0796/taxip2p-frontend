@@ -9,6 +9,11 @@ export const createOrderSchema = z.object({
     .string()
     .min(5, 'Минимум 5 символов')
     .max(100, 'Максимум 100 символов'),
+  pickupTime: z
+    .enum(['MINS_15', 'MINS_30', 'HOUR_1'], {
+      required_error: 'Выберите время подачи',
+      invalid_type_error: 'Некорректное время подачи'
+    }),
   price: z
     .number()
     .min(1, 'Цена должна быть больше 0')

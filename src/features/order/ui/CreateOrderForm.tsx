@@ -6,10 +6,12 @@ import { createOrderSchema } from '../lib/schema';
 import { Input, Textarea } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button/Button';
 import { useTelegram } from '@/app/providers/TelegramProvider';
+import { PickupTime } from '@/shared/types/api';
 
 type FormData = {
   fromAddress: string;
   toAddress: string;
+  pickupTime: PickupTime;
   price?: number;
   comment?: string;
 };
@@ -82,6 +84,23 @@ export const CreateOrderForm = ({ onSubmit, isLoading }: Props) => {
           error={errors.toAddress?.message}
           {...register('toAddress')}
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Время подачи
+        </label>
+        <select
+          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+          {...register('pickupTime')}
+        >
+          <option value="MINS_15">Через 15 минут</option>
+          <option value="MINS_30">Через 30 минут</option>
+          <option value="HOUR_1">Через 1 час</option>
+        </select>
+        {errors.pickupTime && (
+          <p className="mt-1 text-sm text-red-600">{errors.pickupTime.message}</p>
+        )}
       </div>
 
       <div>
