@@ -1,9 +1,12 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Spinner } from '@/shared/ui';
 import { Role } from '@/shared/types/common';
 import { api } from '@/shared/api/http';
 import { useTelegram } from '@/app/providers/TelegramProvider';
 import { useCallback, useEffect, useRef, useState } from 'react';
+
+// Максимальное количество попыток проверки роли
+const MAX_CHECK_RETRIES = 2;
 
 const roleRoutes: Record<Role, string> = {
   passenger: '/passenger',
@@ -12,66 +15,137 @@ const roleRoutes: Record<Role, string> = {
 
 const RoleSelectPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [isSelecting, setIsSelecting] = useState(false);
   const [error, setError] = useState<string>();
   const { isReady, webApp, hideBackButton, hideMainButton, haptic } = useTelegram();
+  
+  // Используем useRef для отслеживания состояния
   const hasNavigated = useRef(false);
+  const checkAttempts = useRef(0);
+  const preventLoop = useRef(false);
 
   const navigateToRolePage = useCallback((role: Role) => {
-    if (hasNavigated.current) return;
-    hasNavigated.current = true;
+    // Защита от повторных перенаправлений
+    if (hasNavigated.current || preventLoop.current) {
+      console.log('ℹ️ Перенаправление предотвращено - уже было выполнено или заблокировано');
+      return;
+    }
+    
     const nextRoute = roleRoutes[role];
-    console.log('Navigating to:', nextRoute);
-    navigate(nextRoute, { replace: true });
-  }, [navigate]);
+    console.log('🚩 Переход на:', nextRoute);
+    
+    // Предотвращаем повторное перенаправление
+    hasNavigated.current = true;
+    
+    try {
+      navigate(nextRoute, { replace: true });
+    } catch (error) {
+      console.error('❌ Ошибка при перенаправлении:', error);
+      setError('Не удалось перейти на страницу роли. Пожалуйста, обновите страницу.');
+    }
+  }, [navigate, setError]);
 
   useEffect(() => {
-    if (!isReady || hasNavigated.current) return;
+    // Если уже выполнено перенаправление или предотвращаем цикл, не продолжаем
+    if (!isReady || hasNavigated.current || preventLoop.current) return;
+    
+    // Защита от слишком большого количества попыток
+    if (checkAttempts.current >= MAX_CHECK_RETRIES) {
+      console.warn('⚠️ Превышено максимальное количество попыток проверки роли');
+      preventLoop.current = true;
+      setIsLoading(false);
+      return;
+    }
 
     const checkRole = async () => {
       try {
-        console.log('Checking role...');
+        // Увеличиваем счетчик попыток
+        checkAttempts.current += 1;
+        console.log(`🔍 Проверка роли... (Попытка ${checkAttempts.current}/${MAX_CHECK_RETRIES})`);
+        
         const profile = await api.getProfile();
-        console.log('Profile response:', profile);
+        console.log('✅ Профиль получен:', profile);
 
         if (profile?.role) {
           navigateToRolePage(profile.role);
+        } else {
+          console.log('ℹ️ Роль не выбрана, остаемся на странице выбора роли');
         }
       } catch (error) {
-        console.error('Error checking role:', error);
+        console.error('❌ Ошибка при проверке роли:', error);
+        
+        // В режиме разработки предотвращаем повторные попытки
+        const isDevMode = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true';
+        if (isDevMode) {
+          preventLoop.current = true;
+        }
+        
         setError(error instanceof Error ? error.message : 'Не удалось проверить роль');
       } finally {
         setIsLoading(false);
       }
     };
 
+    // Скрываем ненужные кнопки
     hideBackButton();
     hideMainButton();
+    
+    // Запускаем проверку роли
     checkRole();
-  }, [isReady, navigateToRolePage, hideBackButton, hideMainButton]);
+  }, [isReady, navigateToRolePage, hideBackButton, hideMainButton, location.pathname]);
 
   const handleRoleSelect = async (role: Role) => {
+    // Предотвращаем повторный выбор роли
+    if (isSelecting || hasNavigated.current) {
+      console.warn('⚠️ Выбор роли уже выполняется или выполнено перенаправление');
+      return;
+    }
+    
+    // Предотвращаем циклические вызовы
+    preventLoop.current = true;
+    
+    // Проверяем готовность WebApp
     if (!isReady || !webApp) {
-      console.warn('WebApp not ready:', {
+      console.warn('⚠️ WebApp не готов:', {
         isReady,
         user: webApp?.initDataUnsafe?.user
       });
-      setError('Приложение доступно только через Telegram');
-      return;
+      
+      // В режиме разработки мы все равно продолжаем
+      const isDevMode = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true';
+      if (!isDevMode) {
+        setError('Приложение доступно только через Telegram');
+        return;
+      }
+      console.log('🛠️ Режим разработки: продолжаем без WebApp');
     }
 
     setIsSelecting(true);
     setError(undefined);
-    console.log('Selecting role:', role);
+    console.log('💻 Выбрана роль:', role);
 
     try {
       await api.updateProfile({ role });
       haptic?.notification('success');
-      navigateToRolePage(role);
+      console.log('✅ Роль успешно сохранена');
+      
+      // Добавляем небольшую задержку перед перенаправлением,
+      // чтобы избежать слишком быстрых перенаправлений
+      setTimeout(() => navigateToRolePage(role), 100);
     } catch (error) {
-      console.error('Error setting role:', error);
+      console.error('❌ Ошибка при сохранении роли:', error);
       haptic?.notification('error');
+      
+      // В режиме разработки все равно перенаправляем
+      const isDevMode = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true';
+      if (isDevMode) {
+        console.log('🛠️ Режим разработки: перенаправляем несмотря на ошибку');
+        setTimeout(() => navigateToRolePage(role), 300);
+        return;
+      }
+      
       setError(error instanceof Error ? error.message : 'Не удалось сохранить роль');
     } finally {
       setIsSelecting(false);
