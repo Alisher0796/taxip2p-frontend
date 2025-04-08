@@ -44,8 +44,8 @@ export const createHttp = () => {
       if (!webApp) {
         if (IS_DEV_MODE) {
           console.warn('💪 Режим разработки: продолжаем без авторизации Telegram');
-          // В режиме разработки добавляем тестовый заголовок авторизации
-          requestHeaders['x-test-auth'] = 'development-mode';
+          // В режиме разработки не добавляем тестовые заголовки, чтобы избежать CORS-ошибок
+          // Вместо этого вернем мок-данные при ошибках
         } else {
           throw new Error('Telegram WebApp недоступен');
         }
@@ -89,9 +89,7 @@ export const createHttp = () => {
             
             if (IS_DEV_MODE) {
               console.warn('💪 Режим разработки: продолжаем без авторизации Telegram');
-              // В режиме разработки добавляем тестовый заголовок авторизации
-              requestHeaders['x-test-auth'] = 'development-mode';
-              requestHeaders['x-skip-auth'] = 'true';
+              // В режиме разработки не добавляем заголовки, которые вызывают CORS-ошибки
             } else {
               throw new Error('Отсутствуют данные авторизации Telegram');
             }
@@ -101,8 +99,7 @@ export const createHttp = () => {
           
           if (IS_DEV_MODE) {
             console.warn('💪 Режим разработки: продолжаем без авторизации Telegram');
-            requestHeaders['x-test-auth'] = 'development-mode';
-            requestHeaders['x-skip-auth'] = 'true';
+            // Не добавляем кастомные заголовки, которые не разрешены CORS-политикой сервера
           } else {
             throw new Error('Ошибка авторизации Telegram');
           }
@@ -111,6 +108,24 @@ export const createHttp = () => {
 
       const fullUrl = `${BASE_URL}${API_PREFIX}${endpoint}`;
       console.debug('Request to API:', { method, fullUrl, body, headers: requestHeaders });
+      
+      // В режиме разработки всегда используем мок-данные
+      // это самый надежный способ избежать ошибок CORS
+      if (IS_DEV_MODE) {
+        console.log('🛠️ Режим разработки: используем мок-данные');
+        
+        // Возвращаем мок-данные в режиме разработки
+        if (endpoint === '/profile') {
+          return mockProfile() as unknown as T;
+        } else if (endpoint === '/orders' || endpoint.startsWith('/orders?')) {
+          return mockOrders() as unknown as T;
+        } else if (endpoint.match(/\/orders\/[\w-]+$/)) {
+          return mockOrderDetails() as unknown as T;
+        }
+        
+        // Для других эндпоинтов возвращаем пустой объект
+        return {} as unknown as T;
+      }
 
       const response = await fetch(fullUrl, {
         method,
@@ -142,10 +157,23 @@ export const createHttp = () => {
         if (response.status === 401) {
           // Ошибка аутентификации
           if (IS_DEV_MODE) {
+            // Извлекаем сообщение об ошибке
             const errorMessage = data && typeof data === 'object' ? 
               (data as any).message || '401 Unauthorized' : 
               '401 Unauthorized';
-            console.warn('⚠️ Режим разработки: проигнорирована ошибка авторизации', errorMessage);
+              
+            // Проверяем на CORS-ошибку или ошибку авторизации
+            const isCorsError = 
+              typeof errorMessage === 'string' && errorMessage.includes('CORS') || 
+              errorMessage.toString().includes('header field') ||  // Частый паттерн в CORS-ошибках
+              response.type === 'opaque' ||  // Тип 'opaque' указывает на CORS-ошибку
+              response.status.toString() === '0'; // Статус 0 часто указывает на проблемы с сетью
+              
+            if (isCorsError) {
+              console.warn('⚠️ Режим разработки: обнаружена CORS-ошибка, возвращаем мок-данные');
+            } else {
+              console.warn('⚠️ Режим разработки: проигнорирована ошибка авторизации', errorMessage);
+            }
             
             // В режиме разработки возвращаем мок-данные для всех типов запросов
             if (endpoint === '/profile') {
