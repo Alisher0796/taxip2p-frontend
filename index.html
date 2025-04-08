@@ -8,15 +8,40 @@
   </head>
   <body>
     <div id="root"></div>
-    <!-- Полифилл для TelegramGameProxy, устраняющий ошибку при запуске вне Telegram -->
+    <!-- Безопасный код для предотвращения ошибок с TelegramGameProxy -->
     <script>
-      if (!window.TelegramGameProxy) {
-        console.log('Adding TelegramGameProxy polyfill');
-        window.TelegramGameProxy = {
-          receiveEvent: function() {},
-          postEvent: function() { return true; }
+      (function() {
+        // Перехватываем и обрабатываем ошибки, связанные с TelegramGameProxy
+        window.addEventListener('error', function(event) {
+          if (event.message && event.message.includes('TelegramGameProxy')) {
+            event.preventDefault();
+            console.warn('Перехвачена ошибка TelegramGameProxy:', event.message);
+          }
+        }, { capture: true });
+        
+        // Добавляем безопасный доступ к TelegramGameProxy
+        window.SafeTelegramGameProxy = {
+          receiveEvent: function(eventName, eventData) {
+            try {
+              if (window.TelegramGameProxy && typeof window.TelegramGameProxy.receiveEvent === 'function') {
+                return window.TelegramGameProxy.receiveEvent(eventName, eventData);
+              }
+            } catch (e) {
+              console.warn('Ошибка при вызове TelegramGameProxy.receiveEvent:', e);
+            }
+          },
+          postEvent: function(eventName, eventData) {
+            try {
+              if (window.TelegramGameProxy && typeof window.TelegramGameProxy.postEvent === 'function') {
+                return window.TelegramGameProxy.postEvent(eventName, eventData);
+              }
+            } catch (e) {
+              console.warn('Ошибка при вызове TelegramGameProxy.postEvent:', e);
+            }
+            return true;
+          }
         };
-      }
+      })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>

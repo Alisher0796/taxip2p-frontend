@@ -21,6 +21,8 @@ export function AppInitializer({ children }: AppInitializerProps) {
       try {
         console.log('🚀 Initializing application...');
         
+        // TelegramGameProxy скрипт теперь добавлен в index.html
+        
         // Проверяем доступность API, получая базовые данные
         try {
           console.log('📡 Checking API connection...');

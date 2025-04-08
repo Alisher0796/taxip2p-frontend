@@ -2,6 +2,7 @@ import { ReactNode, useCallback, useEffect, useState } from 'react';
 import type { TelegramWebApp, WebAppUser, HapticFeedback } from '@/shared/types/telegram';
 import { TelegramContext } from './context';
 import { LoadingScreen } from '@/shared/ui/LoadingScreen';
+import { safeWebApp, safeTelegramCall, safeReady, safeExpand } from '../../utils/safeTelegram';
 
 interface TelegramProviderProps {
   children: ReactNode;
@@ -21,13 +22,15 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
   const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
 
   const checkWebApp = useCallback(() => {
-    if (!window.Telegram?.WebApp) {
+    // Используем безопасный доступ к WebApp
+    const app = safeWebApp();
+    if (!app) {
       return false;
     }
 
-    const { WebApp } = window.Telegram;
-    const userExists = !!WebApp.initDataUnsafe?.user;
-    const initDataPresent = !!WebApp.initData;
+    // Безопасно проверяем наличие пользователя и initData
+    const userExists = safeTelegramCall(() => !!app.initDataUnsafe?.user, false);
+    const initDataPresent = safeTelegramCall(() => !!app.initData, false);
 
     return userExists && initDataPresent;
   }, []);
@@ -36,11 +39,17 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
     const initializeWebApp = async () => {
       try {
         if (checkWebApp()) {
-          const { WebApp } = window.Telegram;
-          const webAppUser = WebApp.initDataUnsafe?.user;
+          // Безопасно получаем WebApp
+          const app = safeWebApp();
+          if (!app) {
+            throw new Error('Не удалось получить Telegram WebApp');
+          }
+          
+          // Безопасно получаем пользователя
+          const webAppUser = safeTelegramCall(() => app.initDataUnsafe?.user, null);
           
           console.debug('WebApp initialized:', {
-            initData: WebApp.initData,
+            initData: app.initData?.slice(0, 20) + '...',
             user: webAppUser,
           });
 
@@ -48,9 +57,12 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
             setUser(webAppUser);
           }
 
-          setWebApp(WebApp);
-          WebApp.ready();
-          WebApp.expand();
+          setWebApp(app);
+          
+          // Безопасно вызываем методы ready и expand
+          safeReady();
+          safeExpand();
+          
           setIsInitialized(true);
           return;
         }
