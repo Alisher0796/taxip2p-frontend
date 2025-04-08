@@ -1,65 +1,69 @@
 import io from 'socket.io-client';
 
 /**
- * Создать сокет-клиент с поддержкой аутентификации для режима разработки и продакшена
+ * Функция создания сокет-клиента с необходимыми параметрами
  */
 export function createSocket() {
-  // Проверяем, работаем ли мы в режиме разработки
   const isDevMode = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true';
-  
-  // JWT токен для аутентификации (если есть)
-  const authToken = localStorage.getItem('authToken');
-  
-  // Данные Telegram WebApp
   const telegramInitData = window.Telegram?.WebApp?.initData || '';
   
+  // Создаем макетный объект сокета для режима разработки
+  // Это позволит избежать ошибок в консоли
   if (isDevMode) {
-    console.log('📶 Создание сокета в режиме разработки');
+    // Не пытаемся подключиться к реальному серверу в режиме разработки
+    console.log('🛠️ Создан мок-сокет для режима разработки');
+    
+    // Реализуем макетный сокет с необходимыми методами
+    const mockSocket = {
+      connected: false,
+      io: { uri: 'mock://localhost' },
+      connect: () => {
+        console.log('🐞 Мок-сокет: попытка подключения');
+        // Не делаем ничего
+        return mockSocket;
+      },
+      disconnect: () => {
+        console.log('🐞 Мок-сокет: отключение');
+        return mockSocket;
+      },
+      on: (event: string, _callback: any) => {
+        console.log('🐞 Мок-сокет: регистрация обработчика', event);
+        return mockSocket;
+      },
+      off: (event: string) => {
+        console.log('🐞 Мок-сокет: удаление обработчика', event);
+        return mockSocket;
+      },
+      emit: (event: string, ...args: any[]) => {
+        console.log('🐞 Мок-сокет: отправка события', event, args);
+        return mockSocket;
+      }
+    };
+    
+    return mockSocket as any;
   }
-
-  // Создаем сокет с управляемыми параметрами подключения
-  const socketOptions: Record<string, any> = {
-    autoConnect: false,
-    withCredentials: true
-  };
-
-  // Настраиваем заголовки для HTTP запросов (handshake)
-  socketOptions.extraHeaders = {
-    'X-Telegram-Init-Data': telegramInitData,
-  };
   
-  // Добавляем JWT токен в заголовки, если он есть
-  if (authToken) {
-    socketOptions.extraHeaders['Authorization'] = `Bearer ${authToken}`;
-  }
-  
-  // В режиме разработки добавляем специальный флаг
-  if (isDevMode) {
-    socketOptions.extraHeaders['X-Development-Mode'] = 'true';
-  }
+  // Для production используем реальный сокет
+  const socket = io(import.meta.env.VITE_API_URL, {
+    autoConnect: false, // Не подключаться автоматически при создании
+    query: telegramInitData ? { telegramInitData } : undefined, // Передаем данные для аутентификации
+  });
 
-  // Создаем сокет с настроенными параметрами
-  const socket = io(import.meta.env.VITE_API_URL, socketOptions);
-  
   // Добавляем логирование в режиме разработки
   if (isDevMode) {
-    // Логируем события подключения/отключения
     socket.on('connect', () => {
       console.log('💚 Socket успешно подключен');
     });
     
     socket.on('connect_error', (error: Error) => {
       console.error('💔 Socket ошибка подключения:', error.message);
-      console.log('📃 Параметры подключения:', socketOptions);
+      
+      // В режиме разработки можно обойтись без WebSocket
+      console.log('🛠️ В режиме разработки WebSocket не обязателен для работы приложения');
     });
     
     socket.on('disconnect', (reason: string) => {
       console.log('📴 Socket отключен:', reason);
-    });
-    
-    // Мониторим и другие события для отладки
-    socket.on('error', (error: Error) => {
-      console.error('⚠️ Socket ошибка:', error);
     });
   }
 
