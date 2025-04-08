@@ -2,10 +2,13 @@ import type { Order, OrderStatus, PriceOffer, Message, Profile } from '@/shared/
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') || '';
 const API_PREFIX = '/api';
+const IS_DEV_MODE = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true';
 
 if (!BASE_URL) {
   throw new Error('VITE_API_URL is not defined');
 }
+
+console.log(`API initialized with URL: ${BASE_URL}${API_PREFIX}, Dev mode: ${IS_DEV_MODE}`);
 
 /** Ответ от API */
 export interface ApiResponse<T> {
@@ -30,36 +33,52 @@ export const createHttp = () => {
       'Content-Type': 'application/json',
       ...headers,
     };
-
-    if (!window.Telegram?.WebApp) {
-      throw new Error('Telegram WebApp is not available');
-    }
-
-    const webApp = window.Telegram.WebApp;
     
-    if (!webApp?.initData || !webApp?.initDataUnsafe?.user) {
-      console.error('WebApp initialization error:', { 
-        initData: webApp?.initData,
-        user: webApp?.initDataUnsafe?.user 
-      });
-      throw new Error('Ошибка авторизации Telegram');
-    }
-
-    const { initData } = webApp;
-
-    requestHeaders['x-telegram-init-data'] = initData;
-
-    const fullUrl = `${BASE_URL}${API_PREFIX}${endpoint}`;
-    console.debug('Request to API:', { method, fullUrl, body });
-
     try {
+      // Проверяем доступность Telegram WebApp
+      if (!window.Telegram?.WebApp) {
+        if (IS_DEV_MODE) {
+          console.warn('Dev mode: продолжаем без Telegram WebApp');
+        } else {
+          throw new Error('Telegram WebApp недоступен');
+        }
+      } else {
+        const webApp = window.Telegram.WebApp;
+        
+        // Проверяем наличие данных инициализации
+        if (webApp?.initData && webApp?.initDataUnsafe?.user) {
+          const { initData } = webApp;
+          requestHeaders['x-telegram-init-data'] = initData;
+          console.debug('Telegram auth data added to request');
+        } else {
+          console.warn('Telegram WebApp данные отсутствуют:', { 
+            initData: webApp?.initData,
+            user: webApp?.initDataUnsafe?.user 
+          });
+          
+          if (!IS_DEV_MODE) {
+            throw new Error('Ошибка авторизации Telegram');
+          }
+        }
+      }
+
+      const fullUrl = `${BASE_URL}${API_PREFIX}${endpoint}`;
+      console.debug('Request to API:', { method, fullUrl, body, headers: requestHeaders });
+
       const response = await fetch(fullUrl, {
         method,
         headers: requestHeaders,
         body: body ? JSON.stringify(body) : undefined,
       });
 
-      const data: ApiResponse<T> = await response.json();
+      let data: ApiResponse<T>;
+      
+      try {
+        data = await response.json();
+      } catch (error) {
+        console.error('Failed to parse API response:', error);
+        throw new Error(`Ошибка при обработке ответа сервера: ${response.status}`);
+      }
 
       if (!response.ok) {
         console.error('HTTP Error:', {
@@ -68,12 +87,31 @@ export const createHttp = () => {
           data,
         });
 
-        throw new Error(data.error || 'Что-то пошло не так');
+        if (response.status === 401) {
+          // Ошибка аутентификации
+          throw new Error('Ошибка авторизации. Попробуйте перезапустить приложение в Telegram.');
+        } else if (response.status === 404) {
+          throw new Error(`API не найден: ${endpoint}`);
+        } else {
+          throw new Error(data.error || `Ошибка сервера: ${response.status}`);
+        }
       }
 
       return data.data;
     } catch (error) {
       console.error('API Error:', error);
+      if (IS_DEV_MODE && endpoint === '/profile') {
+        console.warn('Dev mode: возвращаем тестовый профиль');
+        return {
+          id: 'test-user-id',
+          username: 'test_user',
+          telegramId: '123456789',
+          role: 'passenger',
+          rating: 5,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        } as unknown as T;
+      }
       throw error instanceof Error ? error : new Error('Неизвестная ошибка');
     }
   };
