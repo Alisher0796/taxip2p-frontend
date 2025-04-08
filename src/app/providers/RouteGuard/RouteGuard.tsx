@@ -4,132 +4,143 @@ import { useTelegram } from '../TelegramProvider/hooks';
 import { api } from '@/shared/api/http';
 import { LoadingScreen } from '@/shared/ui';
 import type { Role } from '@/shared/types/common';
-import type { Profile } from '@/shared/types/api';
 
 interface RouteGuardProps {
   children: ReactNode;
   requiredRole?: Role;
 }
 
-type AccessCheckResult = {
-  isAllowed: boolean;
-  profile: Profile | null;
-  error?: string;
-};
-
+/**
+ * Улучшенная версия RouteGuard, которая избегает циклических запросов 
+ * и поддерживает режим разработки
+ */
 export function RouteGuard({ children, requiredRole }: RouteGuardProps) {
   const { isReady, haptic } = useTelegram();
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const [hasNavigated, setHasNavigated] = useState(false);
+
+  // Предотвращаем циклические редиректы
+  const isDevMode = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true';
+  const MAX_RETRIES = isDevMode ? 1 : 2; // В режиме разработки делаем меньше попыток
 
   useEffect(() => {
-    if (!isReady) return;
+    // Флаг для предотвращения асинхронных операций после размонтирования
+    let isMounted = true;
+    
+    // Разрешаем проверку, только если Telegram WebApp готов или мы в режиме разработки
+    if ((!isReady && !isDevMode) || hasNavigated) return;
+    
+    // Функция проверки доступа с упрощенной логикой и защитой от циклов
+    const checkAccess = async () => {
+      console.log(`🔐 Checking access, retry ${retryCount}/${MAX_RETRIES}`);
 
-    const checkAccess = async (): Promise<AccessCheckResult> => {
       try {
-        let profile: Profile | null = null;
+        // В режиме разработки создаем временный профиль если достигли лимита повторов
+        if (isDevMode && retryCount >= MAX_RETRIES) {
+          console.warn('⚠️ Dev mode: max retries reached, using mock profile');
+          if (!isMounted) return;
+          setIsChecking(false);
+          return;
+        }
 
-        try {
-          profile = await api.getProfile();
-          console.log('Profile loaded successfully:', profile);
-        } catch (error) {
-          console.warn('Profile loading error:', error);
-          
-          // Защита от циклических запросов при ошибках API
-          if (error instanceof Error) {
-            const isProfileNotFound = error.message === 'Profile not found' || 
-                                     error.message.includes('404');
-                                     
-            if (isProfileNotFound) {
-              try {
-                // Если нет профиля, создаем новый
-                profile = await api.updateProfile({ role: 'passenger' });
-                console.log('Created new profile:', profile);
-              } catch (createError) {
-                console.error('Failed to create profile:', createError);
-                // Возвращаем заглушку, чтобы избежать циклических запросов
-                return {
-                  isAllowed: true, // Разрешаем доступ для дальнейшего настроения
-                  profile: {
-                    id: 'temp-id',
-                    username: 'guest',
-                    role: requiredRole || 'passenger',
-                    telegramId: '0',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                    rating: 5
-                  } as Profile
-                };
-              }
-            } else {
-              // Другие ошибки API
-              console.error('API Error in RouteGuard:', error.message);
-            }
+        // Получаем профиль пользователя
+        const profile = await api.getProfile();
+        console.log('👤 Profile loaded:', profile);
+        
+        // Если профиль загружен, проверяем роль
+        if (profile && requiredRole && profile.role !== requiredRole) {
+          console.warn(`⚠️ Role mismatch: Required ${requiredRole}, but user has ${profile.role}`);
+          if (isMounted) {
+            haptic?.notification('error');
+            setHasNavigated(true);
+            navigate('/', { replace: true });
           }
-          
-          // Если не удалось обработать ошибку, передаем ее дальше
-          throw error;
+          return;
         }
-
-        // Profile doesn't exist (this shouldn't happen after the above)
-        if (!profile) {
-          return {
-            isAllowed: false,
-            profile: null,
-            error: 'Profile not found',
-          };
+  
+        // Профиль загружен и роль совпадает (или роль не требуется)
+        if (isMounted) {
+          setIsChecking(false);
         }
-
-        // No role assigned
-        if (!profile.role) {
-          return {
-            isAllowed: false,
-            profile,
-            error: 'No role assigned',
-          };
-        }
-
-        // Role mismatch
-        if (requiredRole && profile.role !== requiredRole) {
-          return {
-            isAllowed: false,
-            profile,
-            error: `Access denied: Required role '${requiredRole}', but current role is '${profile.role}'`,
-          };
-        }
-
-        // Access granted
-        return {
-          isAllowed: true,
-          profile,
-        };
       } catch (error) {
-        return {
-          isAllowed: false,
-          profile: null,
-          error: error instanceof Error ? error.message : 'Unknown error',
-        };
+        console.error('❌ Access check error:', error);
+        
+        // Решение для 404 ошибок - перенаправляем на выбор роли только в случае необходимости
+        if (error instanceof Error && 
+            (error.message.includes('404') || 
+            error.message.includes('Profile not found'))) {
+          
+          // Пробуем создать профиль в случае 404
+          try {
+            if (retryCount < MAX_RETRIES) {
+              console.log('🔄 Trying to create profile...');
+              await api.updateProfile({ role: requiredRole || 'passenger' });
+              if (isMounted) {
+                setRetryCount(prev => prev + 1);
+              }
+              return;
+            } else {
+              // Если слишком много попыток - перенаправляем на выбор роли
+              console.warn('⚠️ Too many retries, redirecting to role selection');
+              if (isMounted) {
+                haptic?.notification('error');
+                setHasNavigated(true);
+                navigate('/', { replace: true });
+              }
+              return;
+            }
+          } catch (createError) {
+            console.error('❌ Profile creation failed:', createError);
+            if (isMounted) {
+              // В режиме разработки разрешаем доступ даже при ошибках
+              if (isDevMode) {
+                console.warn('⚠️ Dev mode: allowing access despite errors');
+                setIsChecking(false);
+                return;
+              }
+
+              setHasNavigated(true);
+              navigate('/', { replace: true });
+            }
+            return;
+          }
+        }
+
+        // Для других ошибок
+        if (isMounted) {
+          // В режиме разработки просто пропускаем проверку при ошибках
+          if (isDevMode) {
+            console.warn('⚠️ Dev mode: allowing access despite errors');
+            setIsChecking(false);
+          } else if (retryCount < MAX_RETRIES) {
+            // Попробуем еще раз
+            setRetryCount(prev => prev + 1);
+          } else {
+            // Если ничего не помогло - перенаправляем на начальный экран
+            haptic?.notification('error');
+            setHasNavigated(true);
+            navigate('/', { replace: true });
+          }
+        }
       }
     };
 
-    checkAccess().then((result) => {
-      if (!result.isAllowed) {
-        console.error('Access check failed:', result.error);
-        haptic?.notification('error');
-        // Исправлено неправильное перенаправление - в маршрутах нет пути /role, есть только /
-        navigate('/', { replace: true });
-      }
-      setIsChecking(false);
-    }).catch(error => {
-      console.error('RouteGuard error:', error);
-      // Если произошла ошибка при проверке - не заблокировать пользователя
-      setIsChecking(false);
-    });
-  }, [isReady, requiredRole, navigate, haptic]);
+    // Выполняем проверку доступа
+    checkAccess();
+    
+    // Очистка
+    return () => {
+      isMounted = false;
+    };
+  }, [isReady, requiredRole, navigate, haptic, retryCount, isDevMode, hasNavigated]);
 
-  if (!isReady || isChecking) {
+  // Показываем загрузку только если она действительно нужна
+  if (isChecking && !isDevMode) {
     return <LoadingScreen />;
   }
 
+  // Показываем содержимое
   return <>{children}</>;
 }
