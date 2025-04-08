@@ -9,48 +9,56 @@ interface SocketProviderProps {
 }
 
 /**
- * Провайдер сокета с улучшенной стабильностью и поддержкой режима разработки
+ * Провайдер сокета для работы с реальным бэкендом на Railway
  */
 export function SocketProvider({ children }: SocketProviderProps) {
   const [socket] = useState(() => createSocket());
   const [isConnected, setIsConnected] = useState(false);
-  const [connectionAttempted, setConnectionAttempted] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   
-  // Проверяем, работаем ли мы в режиме разработки
+  // Определяем режим работы
   const isDevMode = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true';
+  const telegramInitData = window.Telegram?.WebApp?.initData || '';
 
-  // Попытка подключиться к сокету (только один раз)
+  // Подключение к сокету и настройка обработчиков событий
   useEffect(() => {
-    if (connectionAttempted) {
-      return; // Не делаем повторных попыток
-    }
-    
-    // Отмечаем, что попытка была сделана
-    setConnectionAttempted(true);
-    
     if (isDevMode) {
-      console.log('🌐 Попытка подключения к сокету в режиме разработки');
+      console.log('🔌 Подключение к сокету...');
+      console.log('🔑 Telegram initData ' + (telegramInitData ? 'имеется' : 'отсутствует'));
     }
-    
-    // Регистрируем обработчики событий
+
+    // Настраиваем обработчики событий
     socket.on('connect', () => {
       setIsConnected(true);
-      console.log('💚 Сокет успешно подключен');
+      setConnectionError(null);
+      if (isDevMode) console.log('💚 Сокет успешно подключен');
     });
 
     socket.on('disconnect', (reason: string) => {
       setIsConnected(false);
-      console.log('💔 Сокет отключен:', reason);
+      if (isDevMode) console.log('💔 Сокет отключен:', reason);
+      
+      // Автоматически пробуем переподключиться в продакшн-режиме
+      if (!isDevMode && reason !== 'io client disconnect') {
+        // Переподключаемся только при непреднамеренном отключении
+        if (isDevMode) console.log('🔄 Автоматическая попытка переподключения...');
+      }
     });
 
     socket.on('connect_error', (error: Error) => {
-      console.log('🚫 Ошибка подключения к сокету:', error.message);
-      
-      // В режиме разработки продолжаем работу без сокета
+      setConnectionError(error.message);
       if (isDevMode) {
-        console.log('🛠️ В режиме разработки приложение может работать без WebSocket');
-        // Не делаем повторных попыток подключения
+        console.log('⚠️ Ошибка подключения к сокету:', error.message);
+        
+        // Подсказки для отладки
+        if (!telegramInitData) {
+          console.log('🔑 Отсутствуют данные Telegram. В продакшн-режиме открывайте приложение через Telegram.');
+        }
       }
+    });
+    
+    socket.on('error', (error: Error) => {
+      if (isDevMode) console.log('❌ Ошибка сокета:', error.message);
     });
     
     // Пытаемся подключиться
@@ -61,18 +69,23 @@ export function SocketProvider({ children }: SocketProviderProps) {
       socket.off('connect');
       socket.off('disconnect');
       socket.off('connect_error');
+      socket.off('error');
       socket.disconnect();
     };
-  }, [socket, connectionAttempted, isDevMode]);
+  }, [socket, isDevMode, telegramInitData]);
 
-  // В режиме разработки всегда считаем приложение работоспособным, даже без сокета
-  const devModeConnected = isDevMode ? true : isConnected;
+  // Определяем статус подключения для приложения
+  // В режиме разработки приложение всегда работоспособно даже без сокета
+  const appConnected = isDevMode ? true : isConnected;
   
   return (
-    <SocketContext.Provider value={{ socket, isConnected: devModeConnected }}>
+    <SocketContext.Provider value={{ socket, isConnected: appConnected }}>
+      {/* Показываем индикатор статуса соединения только в режиме разработки */}
       {isDevMode && !isConnected && (
-        <div className="fixed bottom-0 left-0 right-0 bg-yellow-100 text-yellow-800 text-xs p-1 text-center">
-          Нет соединения с WebSocket (режим разработки)
+        <div className="fixed bottom-0 left-0 right-0 bg-yellow-100 text-yellow-800 text-xs p-1 text-center z-50">
+          {connectionError 
+            ? `Ошибка WebSocket: ${connectionError}` 
+            : 'Нет подключения к WebSocket (режим разработки)'}
         </div>
       )}
       {children}

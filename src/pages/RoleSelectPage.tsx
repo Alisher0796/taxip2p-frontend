@@ -17,8 +17,9 @@ const RoleSelectPage = () => {
   const [error, setError] = useState<string>();
   const { isReady, webApp, hideBackButton, hideMainButton, haptic } = useTelegram();
   
-  // Определяем режим разработки один раз на уровне компонента
+  // Определяем режим разработки и получаем данные Telegram на уровне компонента
   const isDevMode = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true';
+  const telegramInitData = window.Telegram?.WebApp?.initData || '';
   
   // Используем useRef для отслеживания состояния и предотвращения множественных операций
   const isInitialCheckDone = useRef(false);
@@ -71,6 +72,14 @@ const RoleSelectPage = () => {
       return;
     }
     
+    // Проверяем наличие данных Telegram для продакшн-режима
+    if (!telegramInitData && !isDevMode) {
+      console.log('⚠️ Отсутствуют данные Telegram! Откройте приложение через Telegram.');
+      setError('Приложение должно быть открыто через Telegram');
+      setIsLoading(false);
+      return;
+    }
+    
     // Только для production: проверяем роль пользователя
     const checkRole = async () => {
       try {
@@ -116,6 +125,14 @@ const RoleSelectPage = () => {
       setError('Приложение доступно только через Telegram');
       return;
     }
+    
+    // Проверяем наличие данных Telegram в продакшн-режиме
+    // telegramInitData уже определен на уровне компонента
+    if (!isDevMode && !telegramInitData) {
+      console.warn('⚠️ Отсутствуют данные Telegram для авторизации');
+      setError('Ошибка авторизации. Откройте приложение через Telegram');
+      return;
+    }
 
     // Устанавливаем состояние выбора
     setIsSelecting(true);
@@ -134,9 +151,10 @@ const RoleSelectPage = () => {
       console.error('❌ Ошибка при сохранении роли:', error);
       haptic?.notification('error');
       
-      // В режиме разработки все равно перенаправляем
-      if (isDevMode) {
-        console.log('🛠️ Режим разработки: перенаправляем несмотря на ошибку');
+      // В режиме разработки или при наличии параметра отладки все равно перенаправляем
+      const hasDebugParam = new URLSearchParams(window.location.search).has('debug');
+      if (isDevMode || hasDebugParam) {
+        console.log('🛠️ Режим отладки: перенаправляем несмотря на ошибку');
         navigateToRolePage(role);
         return;
       }
