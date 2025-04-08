@@ -1,154 +1,137 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+// Использование react-router заменено на прямую навигацию через window.location
 import { Button, Spinner } from '@/shared/ui';
 import { Role } from '@/shared/types/common';
 import { api } from '@/shared/api/http';
 import { useTelegram } from '@/app/providers/TelegramProvider';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-// Максимальное количество попыток проверки роли
-const MAX_CHECK_RETRIES = 2;
-
+// Маршруты для каждой роли
 const roleRoutes: Record<Role, string> = {
   passenger: '/passenger',
   driver: '/driver',
 };
 
 const RoleSelectPage = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [isSelecting, setIsSelecting] = useState(false);
   const [error, setError] = useState<string>();
   const { isReady, webApp, hideBackButton, hideMainButton, haptic } = useTelegram();
   
-  // Используем useRef для отслеживания состояния
-  const hasNavigated = useRef(false);
-  const checkAttempts = useRef(0);
-  const preventLoop = useRef(false);
+  // Определяем режим разработки один раз на уровне компонента
+  const isDevMode = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true';
+  
+  // Используем useRef для отслеживания состояния и предотвращения множественных операций
+  const isInitialCheckDone = useRef(false);
+  const navigationInProgress = useRef(false);
 
+  // Безопасная навигация с защитой от повторных вызовов
   const navigateToRolePage = useCallback((role: Role) => {
-    // Защита от повторных перенаправлений
-    if (hasNavigated.current || preventLoop.current) {
-      console.log('ℹ️ Перенаправление предотвращено - уже было выполнено или заблокировано');
+    // Если навигация уже в процессе, ничего не делаем
+    if (navigationInProgress.current) {
+      console.log('ℹ️ Навигация уже выполняется');
       return;
     }
     
     const nextRoute = roleRoutes[role];
     console.log('🚩 Переход на:', nextRoute);
     
-    // Предотвращаем повторное перенаправление
-    hasNavigated.current = true;
+    // Блокируем дальнейшие навигации
+    navigationInProgress.current = true;
     
     try {
-      navigate(nextRoute, { replace: true });
+      // Используем window.location вместо navigate для более стабильной навигации
+      // Это гарантирует однократный переход и избегает проблем с history.replaceState
+      window.location.pathname = nextRoute;
     } catch (error) {
       console.error('❌ Ошибка при перенаправлении:', error);
       setError('Не удалось перейти на страницу роли. Пожалуйста, обновите страницу.');
+      // Разблокируем навигацию в случае ошибки
+      navigationInProgress.current = false;
     }
-  }, [navigate, setError]);
+  }, [setError]);
 
+  // Единоразовая проверка роли при загрузке страницы
   useEffect(() => {
-    // Если уже выполнено перенаправление или предотвращаем цикл, не продолжаем
-    if (!isReady || hasNavigated.current || preventLoop.current) return;
+    // Если проверка уже выполнена или WebApp не готов, ничего не делаем
+    if (!isReady || isInitialCheckDone.current) return;
     
-    // Защита от слишком большого количества попыток
-    if (checkAttempts.current >= MAX_CHECK_RETRIES) {
-      console.warn('⚠️ Превышено максимальное количество попыток проверки роли');
-      preventLoop.current = true;
-      setIsLoading(false);
-      return;
-    }
-
+    // Скрываем ненужные кнопки в Telegram
+    hideBackButton();
+    hideMainButton();
+    
+    // Отмечаем, что начальная проверка уже запущена
+    isInitialCheckDone.current = true;
+    
     const checkRole = async () => {
       try {
-        // Увеличиваем счетчик попыток
-        checkAttempts.current += 1;
-        console.log(`🔍 Проверка роли... (Попытка ${checkAttempts.current}/${MAX_CHECK_RETRIES})`);
+        console.log('🔍 Проверка роли пользователя...');
         
         const profile = await api.getProfile();
         console.log('✅ Профиль получен:', profile);
 
         if (profile?.role) {
+          // У пользователя уже есть роль, перенаправляем
           navigateToRolePage(profile.role);
         } else {
-          console.log('ℹ️ Роль не выбрана, остаемся на странице выбора роли');
+          console.log('ℹ️ Роль не выбрана, пользователь должен выбрать роль');
+          setIsLoading(false);
         }
       } catch (error) {
         console.error('❌ Ошибка при проверке роли:', error);
         
-        // В режиме разработки предотвращаем повторные попытки
-        const isDevMode = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true';
-        if (isDevMode) {
-          preventLoop.current = true;
-        }
+        // В режиме разработки можно продолжить работу
         
         setError(error instanceof Error ? error.message : 'Не удалось проверить роль');
-      } finally {
         setIsLoading(false);
       }
     };
-
-    // Скрываем ненужные кнопки
-    hideBackButton();
-    hideMainButton();
     
-    // Запускаем проверку роли
+    // Запускаем проверку роли (один раз)
     checkRole();
-  }, [isReady, navigateToRolePage, hideBackButton, hideMainButton, location.pathname]);
+  }, [isReady, navigateToRolePage, hideBackButton, hideMainButton]);
 
+  // Обработка выбора роли пользователем
   const handleRoleSelect = async (role: Role) => {
-    // Предотвращаем повторный выбор роли
-    if (isSelecting || hasNavigated.current) {
-      console.warn('⚠️ Выбор роли уже выполняется или выполнено перенаправление');
+    // Если уже выполняется выбор или навигация, ничего не делаем
+    if (isSelecting || navigationInProgress.current) {
+      console.log('⚠️ Операция уже выполняется');
       return;
     }
     
-    // Предотвращаем циклические вызовы
-    preventLoop.current = true;
-    
-    // Проверяем готовность WebApp
-    if (!isReady || !webApp) {
-      console.warn('⚠️ WebApp не готов:', {
-        isReady,
-        user: webApp?.initDataUnsafe?.user
-      });
-      
-      // В режиме разработки мы все равно продолжаем
-      const isDevMode = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true';
-      if (!isDevMode) {
-        setError('Приложение доступно только через Telegram');
-        return;
-      }
-      console.log('🛠️ Режим разработки: продолжаем без WebApp');
+    // Проверяем готовность WebApp в production режиме
+    if (!isDevMode && (!isReady || !webApp)) {
+      console.warn('⚠️ WebApp не готов:', { isReady, hasUser: !!webApp?.initDataUnsafe?.user });
+      setError('Приложение доступно только через Telegram');
+      return;
     }
 
+    // Устанавливаем состояние выбора
     setIsSelecting(true);
     setError(undefined);
     console.log('💻 Выбрана роль:', role);
 
     try {
+      // Сохраняем выбранную роль
       await api.updateProfile({ role });
       haptic?.notification('success');
       console.log('✅ Роль успешно сохранена');
       
-      // Добавляем небольшую задержку перед перенаправлением,
-      // чтобы избежать слишком быстрых перенаправлений
-      setTimeout(() => navigateToRolePage(role), 100);
+      // Перенаправляем на страницу соответствующей роли
+      navigateToRolePage(role);
     } catch (error) {
       console.error('❌ Ошибка при сохранении роли:', error);
       haptic?.notification('error');
       
       // В режиме разработки все равно перенаправляем
-      const isDevMode = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true';
       if (isDevMode) {
         console.log('🛠️ Режим разработки: перенаправляем несмотря на ошибку');
-        setTimeout(() => navigateToRolePage(role), 300);
+        navigateToRolePage(role);
         return;
       }
       
+      // В production показываем ошибку
       setError(error instanceof Error ? error.message : 'Не удалось сохранить роль');
-    } finally {
-      setIsSelecting(false);
+      setIsSelecting(false); // Разблокируем кнопки только если не выполнили навигацию
     }
   };
 
