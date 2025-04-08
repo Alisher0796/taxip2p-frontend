@@ -91,6 +91,20 @@ export const createHttp = () => {
           // Ошибка аутентификации
           throw new Error('Ошибка авторизации. Попробуйте перезапустить приложение в Telegram.');
         } else if (response.status === 404) {
+          // В режиме разработки возвращаем имитацию данных для определенных точек API
+          if (IS_DEV_MODE) {
+            console.warn(`Dev mode: имитация данных для ${endpoint} из-за 404 ошибки`);
+            
+            // Имитация данных для различных эндпоинтов
+            if (endpoint === '/orders' || endpoint.startsWith('/orders?')) {
+              return mockOrders() as unknown as T;
+            } else if (endpoint.match(/\/orders\/[\w-]+$/)) {
+              return mockOrderDetails() as unknown as T;
+            } else if (endpoint === '/profile') {
+              return mockProfile() as unknown as T;
+            }
+          }
+          
           throw new Error(`API не найден: ${endpoint}`);
         } else {
           throw new Error(data.error || `Ошибка сервера: ${response.status}`);
@@ -100,17 +114,18 @@ export const createHttp = () => {
       return data.data;
     } catch (error) {
       console.error('API Error:', error);
-      if (IS_DEV_MODE && endpoint === '/profile') {
-        console.warn('Dev mode: возвращаем тестовый профиль');
-        return {
-          id: 'test-user-id',
-          username: 'test_user',
-          telegramId: '123456789',
-          role: 'passenger',
-          rating: 5,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        } as unknown as T;
+      // В режиме разработки имитируем данные для определенных API-эндпоинтов
+      if (IS_DEV_MODE) {
+        if (endpoint === '/profile') {
+          console.warn('Dev mode: возвращаем тестовый профиль');
+          return mockProfile() as unknown as T;
+        } else if (endpoint === '/orders' || endpoint.startsWith('/orders?')) {
+          console.warn('Dev mode: возвращаем тестовые заказы');
+          return mockOrders() as unknown as T;
+        } else if (endpoint.match(/\/orders\/[\w-]+$/)) {
+          console.warn('Dev mode: возвращаем детали тестового заказа');
+          return mockOrderDetails() as unknown as T;
+        }
       }
       throw error instanceof Error ? error : new Error('Неизвестная ошибка');
     }
@@ -160,6 +175,59 @@ export interface UpdateProfileDTO {
 const http = createHttp();
 
 /** API клиент */
+// Функции для создания тестовых данных в режиме разработки
+function mockProfile() {
+  return {
+    id: 'test-user-id',
+    username: 'test_user',
+    telegramId: '123456789',
+    role: 'passenger',
+    rating: 5,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function mockOrders() {
+  return [
+    {
+      id: 'order-1',
+      fromAddress: 'ул. Абая, 47',
+      toAddress: 'ТРЦ Мега',
+      status: 'active',
+      price: 2000,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      passengerId: 'test-user-id'
+    },
+    {
+      id: 'order-2',
+      fromAddress: 'Парк Горького',
+      toAddress: 'Аэропорт Алматы',
+      status: 'active',
+      price: 4500,
+      createdAt: new Date(Date.now() - 30 * 60000).toISOString(),
+      updatedAt: new Date(Date.now() - 30 * 60000).toISOString(),
+      passengerId: 'test-user-id'
+    }
+  ];
+}
+
+function mockOrderDetails() {
+  return {
+    id: 'order-1',
+    fromAddress: 'ул. Абая, 47',
+    toAddress: 'ТРЦ Мега',
+    status: 'active',
+    price: 2000,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    passengerId: 'test-user-id',
+    offers: [],
+    messages: []
+  };
+}
+
 export const api = {
   // Профиль
   /** Получить профиль */

@@ -31,13 +31,44 @@ export function RouteGuard({ children, requiredRole }: RouteGuardProps) {
 
         try {
           profile = await api.getProfile();
+          console.log('Profile loaded successfully:', profile);
         } catch (error) {
-          if (error instanceof Error && error.message === 'Profile not found') {
-            // If no profile exists, create one
-            profile = await api.updateProfile({ role: 'passenger' });
-          } else {
-            throw error;
+          console.warn('Profile loading error:', error);
+          
+          // Защита от циклических запросов при ошибках API
+          if (error instanceof Error) {
+            const isProfileNotFound = error.message === 'Profile not found' || 
+                                     error.message.includes('404');
+                                     
+            if (isProfileNotFound) {
+              try {
+                // Если нет профиля, создаем новый
+                profile = await api.updateProfile({ role: 'passenger' });
+                console.log('Created new profile:', profile);
+              } catch (createError) {
+                console.error('Failed to create profile:', createError);
+                // Возвращаем заглушку, чтобы избежать циклических запросов
+                return {
+                  isAllowed: true, // Разрешаем доступ для дальнейшего настроения
+                  profile: {
+                    id: 'temp-id',
+                    username: 'guest',
+                    role: requiredRole || 'passenger',
+                    telegramId: '0',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    rating: 5
+                  } as Profile
+                };
+              }
+            } else {
+              // Другие ошибки API
+              console.error('API Error in RouteGuard:', error.message);
+            }
           }
+          
+          // Если не удалось обработать ошибку, передаем ее дальше
+          throw error;
         }
 
         // Profile doesn't exist (this shouldn't happen after the above)
@@ -85,8 +116,13 @@ export function RouteGuard({ children, requiredRole }: RouteGuardProps) {
       if (!result.isAllowed) {
         console.error('Access check failed:', result.error);
         haptic?.notification('error');
-        navigate('/role', { replace: true });
+        // Исправлено неправильное перенаправление - в маршрутах нет пути /role, есть только /
+        navigate('/', { replace: true });
       }
+      setIsChecking(false);
+    }).catch(error => {
+      console.error('RouteGuard error:', error);
+      // Если произошла ошибка при проверке - не заблокировать пользователя
       setIsChecking(false);
     });
   }, [isReady, requiredRole, navigate, haptic]);
