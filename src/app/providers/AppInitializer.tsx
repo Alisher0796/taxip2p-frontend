@@ -1,7 +1,8 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { api } from '@/shared/api/http';
-import { LoadingScreen } from '@/shared/ui';
+import { LoadingScreen } from '@/shared/ui/LoadingScreen';
 import { ErrorScreen } from '@/shared/ui/ErrorScreen';
+import { safeWebApp } from '@/app/utils/safeTelegram';
 
 // Состояния инициализации приложения
 export type InitState = 'loading' | 'error' | 'success';
@@ -37,25 +38,48 @@ export function AppInitializer({ children }: AppInitializerProps) {
         }
         
         // Проверяем Telegram WebApp
-        console.log('🔍 Checking for Telegram WebApp...');
+        console.log('🔍 Проверка Telegram WebApp...');
         const isDevMode = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === 'true';
         
-        if (!window.Telegram?.WebApp && !isDevMode) {
-          throw new Error('Telegram WebApp not available. Please open this app inside Telegram.');
+        // Безопасно получаем WebApp
+        const webApp = safeWebApp();
+        
+        if (!webApp && !isDevMode) {
+          throw new Error('Приложение должно быть открыто внутри Telegram');
         }
         
-        if (window.Telegram?.WebApp) {
-          // Инициализация Telegram WebApp
-          const { WebApp } = window.Telegram;
-          WebApp.ready();
-          WebApp.expand();
-          
-          console.log('📱 Telegram WebApp initialized', {
-            initData: WebApp.initData?.slice(0, 20) + '...',
-            user: WebApp.initDataUnsafe?.user
-          });
+        if (webApp) {
+          // Проверяем наличие initData для авторизации
+          if (!webApp.initData && !isDevMode) {
+            console.warn('⚠️ Отсутствуют данные инициализации Telegram');  
+          }
+
+          try {
+            // Безопасно вызываем ready() и expand()
+            if (typeof webApp.ready === 'function') {
+              webApp.ready();
+            }
+            
+            if (typeof webApp.expand === 'function') {
+              webApp.expand();
+            }
+            
+            console.log('📱 Telegram WebApp успешно инициализирован', {
+              initDataLength: webApp.initData ? webApp.initData.length : 0,
+              platform: webApp.platform || 'unknown',
+              version: webApp.version || 'unknown',
+              user: webApp.initDataUnsafe?.user ? 
+                `${webApp.initDataUnsafe.user.first_name} (ID: ${webApp.initDataUnsafe.user.id})` : 
+                'not available'
+            });
+          } catch (error) {
+            console.error('❌ Ошибка при инициализации WebApp:', error);
+            if (!isDevMode) {
+              throw new Error('Ошибка инициализации Telegram WebApp. Попробуйте перезапустить приложение.');
+            }
+          }
         } else if (isDevMode) {
-          console.log('🛠️ Dev mode active, continuing without Telegram WebApp');
+          console.log('🛠️ Режим разработки: продолжаем без Telegram WebApp');
         }
         
         // Предзагрузка профиля
@@ -88,7 +112,17 @@ export function AppInitializer({ children }: AppInitializerProps) {
 
   // Показываем ошибку, если инициализация не удалась
   if (initState === 'error') {
-    return <ErrorScreen message={errorMessage || 'Application initialization failed'} />;
+    return (
+      <ErrorScreen 
+        title="Ошибка инициализации"
+        message={errorMessage || 'Не удалось инициализировать приложение'}
+        description="Возможно, приложение запущено вне Telegram или не удается установить соединение с сервером."
+        buttonText="Попробовать снова"
+        onRetry={() => window.location.reload()}
+        secondaryButtonText="Открыть в Telegram"
+        onSecondaryAction={() => window.location.href = 'https://t.me/taxip2p_bot'}
+      />
+    );
   }
 
   // Показываем загрузку, пока приложение инициализируется

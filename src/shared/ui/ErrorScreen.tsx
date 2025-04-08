@@ -1,11 +1,31 @@
 
 
 interface ErrorScreenProps {
+  /** Заголовок экрана ошибки */
+  title?: string;
+  /** Сообщение об ошибке */
   message: string;
-  retryFn?: () => void;
+  /** Дополнительное описание проблемы */
+  description?: string;
+  /** Текст на кнопке повтора */
+  buttonText?: string;
+  /** Функция для повторной попытки */
+  onRetry?: () => void;
+  /** Текст дополнительной кнопки */
+  secondaryButtonText?: string;
+  /** Функция для дополнительного действия */
+  onSecondaryAction?: () => void;
 }
 
-export function ErrorScreen({ message, retryFn }: ErrorScreenProps) {
+export function ErrorScreen({ 
+  title = 'Произошла ошибка',
+  message, 
+  description,
+  buttonText = 'Попробовать снова',
+  onRetry, 
+  secondaryButtonText = 'Открыть в Telegram',
+  onSecondaryAction = () => window.location.href = 'https://t.me/taxip2p_bot'
+}: ErrorScreenProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
       <div className="max-w-md rounded-lg bg-white p-6 text-center shadow-lg">
@@ -24,29 +44,37 @@ export function ErrorScreen({ message, retryFn }: ErrorScreenProps) {
         </svg>
         
         <h1 className="mb-4 text-xl font-bold text-gray-800">
-          Произошла ошибка
+          {title}
         </h1>
         
         <p className="mb-4 text-gray-600">
           {message}
         </p>
         
+        {description && (
+          <p className="mb-4 text-sm text-gray-500">
+            {description}
+          </p>
+        )}
+        
         <div className="flex flex-col gap-3">
-          {retryFn && (
+          {onRetry && (
             <button
-              onClick={retryFn}
+              onClick={onRetry}
               className="w-full rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
             >
-              Попробовать снова
+              {buttonText}
             </button>
           )}
           
-          <button
-            onClick={() => window.location.href = 'https://t.me/taxip2p_bot'}
-            className="w-full rounded border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100"
-          >
-            Открыть в Telegram
-          </button>
+          {onSecondaryAction && (
+            <button
+              onClick={onSecondaryAction}
+              className="w-full rounded border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100"
+            >
+              {secondaryButtonText}
+            </button>
+          )}
         </div>
       </div>
     </div>

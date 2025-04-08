@@ -1,4 +1,5 @@
 import type { Order, OrderStatus, PriceOffer, Message, Profile } from '@/shared/types/api';
+import { safeWebApp } from '@/app/utils/safeTelegram';
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') || '';
 const API_PREFIX = '/api';
@@ -16,6 +17,8 @@ export interface ApiResponse<T> {
   data: T;
   /** Ошибка */
   error?: string;
+  /** Сообщение об ошибке */
+  message?: string;
 }
 
 type RequestOptions = {
@@ -35,28 +38,72 @@ export const createHttp = () => {
     };
     
     try {
-      // Проверяем доступность Telegram WebApp
-      if (!window.Telegram?.WebApp) {
+      // Используем безопасный метод доступа к Telegram WebApp
+      const webApp = safeWebApp();
+      
+      if (!webApp) {
         if (IS_DEV_MODE) {
-          console.warn('Dev mode: продолжаем без Telegram WebApp');
+          console.warn('💪 Режим разработки: продолжаем без авторизации Telegram');
+          // В режиме разработки добавляем тестовый заголовок авторизации
+          requestHeaders['x-test-auth'] = 'development-mode';
         } else {
           throw new Error('Telegram WebApp недоступен');
         }
       } else {
-        const webApp = window.Telegram.WebApp;
-        
-        // Проверяем наличие данных инициализации
-        if (webApp?.initData && webApp?.initDataUnsafe?.user) {
-          const { initData } = webApp;
-          requestHeaders['x-telegram-init-data'] = initData;
-          console.debug('Telegram auth data added to request');
-        } else {
-          console.warn('Telegram WebApp данные отсутствуют:', { 
-            initData: webApp?.initData,
-            user: webApp?.initDataUnsafe?.user 
-          });
+        try {
+          // Проверяем наличие данных инициализации
+          const initData = webApp.initData;
           
-          if (!IS_DEV_MODE) {
+          if (initData && initData.length > 0) {
+            // Добавляем все необходимые заголовки для авторизации
+            requestHeaders['x-telegram-init-data'] = initData;
+            
+            // Проверяем, что не требуется URL-энкодинг
+            if (initData.includes('%') || initData.includes('+')) {
+              console.warn('⚠️ initData может быть URL-энкодирован, пробуем декодировать');
+              requestHeaders['x-telegram-init-data'] = decodeURIComponent(initData);
+            }
+
+            // Защита от CSRF - добавляем Origin и Referer
+            requestHeaders['Origin'] = window.location.origin;
+            requestHeaders['Referer'] = window.location.href;
+            
+            // Добавляем Hash для отладки
+            try {
+              const dataHash = btoa(initData.slice(0, 20)).replace(/=/g, '');
+              requestHeaders['x-telegram-hash'] = dataHash;
+            } catch (e) {
+              console.warn('⚠️ Не удалось создать хеш для отладки:', e);
+            }
+            
+            // Отладка данных авторизации
+            console.info('🔐 Telegram auth data:', { 
+              initDataLength: initData.length,
+              headers: Object.keys(requestHeaders),
+              user: webApp.initDataUnsafe?.user ? 
+                `${webApp.initDataUnsafe.user.first_name} (ID: ${webApp.initDataUnsafe.user.id})` : 
+                'not available'
+            });
+          } else {
+            console.warn('⚠️ Telegram initData отсутствует или пуст');
+            
+            if (IS_DEV_MODE) {
+              console.warn('💪 Режим разработки: продолжаем без авторизации Telegram');
+              // В режиме разработки добавляем тестовый заголовок авторизации
+              requestHeaders['x-test-auth'] = 'development-mode';
+              requestHeaders['x-skip-auth'] = 'true';
+            } else {
+              throw new Error('Отсутствуют данные авторизации Telegram');
+            }
+          }
+        } catch (error) {
+          console.error('❌ Ошибка при получении Telegram initData:', error);
+          
+          if (IS_DEV_MODE) {
+            console.warn('💪 Режим разработки: продолжаем без авторизации Telegram');
+            requestHeaders['x-test-auth'] = 'development-mode';
+            requestHeaders['x-skip-auth'] = 'true';
+          } else {
             throw new Error('Ошибка авторизации Telegram');
           }
         }
@@ -83,12 +130,36 @@ export const createHttp = () => {
       if (!response.ok) {
         console.error('HTTP Error:', {
           status: response.status,
+          statusText: response.statusText,
           url: response.url,
           data,
+          headers: [...response.headers.entries()].reduce((obj, [key, value]) => {
+            obj[key] = value;
+            return obj;
+          }, {} as Record<string, string>),
         });
 
         if (response.status === 401) {
           // Ошибка аутентификации
+          if (IS_DEV_MODE) {
+            const errorMessage = data && typeof data === 'object' ? 
+              (data as any).message || '401 Unauthorized' : 
+              '401 Unauthorized';
+            console.warn('⚠️ Режим разработки: проигнорирована ошибка авторизации', errorMessage);
+            
+            // В режиме разработки возвращаем мок-данные для всех типов запросов
+            if (endpoint === '/profile') {
+              return mockProfile() as unknown as T;
+            } else if (endpoint === '/orders' || endpoint.startsWith('/orders?')) {
+              return mockOrders() as unknown as T;
+            } else if (endpoint.match(/\/orders\/[\w-]+$/)) {
+              return mockOrderDetails() as unknown as T;
+            }
+            
+            // Для других эндпоинтов создаем пустой ответ
+            return {} as unknown as T;
+          }
+          
           throw new Error('Ошибка авторизации. Попробуйте перезапустить приложение в Telegram.');
         } else if (response.status === 404) {
           // В режиме разработки возвращаем имитацию данных для определенных точек API
