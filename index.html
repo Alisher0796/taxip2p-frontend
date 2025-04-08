@@ -8,6 +8,16 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Полифилл для TelegramGameProxy, устраняющий ошибку при запуске вне Telegram -->
+    <script>
+      if (!window.TelegramGameProxy) {
+        console.log('Adding TelegramGameProxy polyfill');
+        window.TelegramGameProxy = {
+          receiveEvent: function() {},
+          postEvent: function() { return true; }
+        };
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
