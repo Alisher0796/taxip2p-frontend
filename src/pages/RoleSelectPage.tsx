@@ -52,16 +52,26 @@ const RoleSelectPage = () => {
 
   // Единоразовая проверка роли при загрузке страницы
   useEffect(() => {
-    // Если проверка уже выполнена или WebApp не готов, ничего не делаем
-    if (!isReady || isInitialCheckDone.current) return;
+    // Если проверка уже выполнена, ничего не делаем
+    if (isInitialCheckDone.current) return;
     
-    // Скрываем ненужные кнопки в Telegram
-    hideBackButton();
-    hideMainButton();
+    // Скрываем ненужные кнопки в Telegram (только если WebApp готов)
+    if (isReady) {
+      hideBackButton();
+      hideMainButton();
+    }
     
     // Отмечаем, что начальная проверка уже запущена
     isInitialCheckDone.current = true;
     
+    // В режиме разработки можно сразу показать кнопки выбора роли
+    if (isDevMode) {
+      console.log('🛠️ Режим разработки: пропускаем проверку роли');
+      setIsLoading(false);
+      return;
+    }
+    
+    // Только для production: проверяем роль пользователя
     const checkRole = async () => {
       try {
         console.log('🔍 Проверка роли пользователя...');
@@ -78,17 +88,19 @@ const RoleSelectPage = () => {
         }
       } catch (error) {
         console.error('❌ Ошибка при проверке роли:', error);
-        
-        // В режиме разработки можно продолжить работу
-        
         setError(error instanceof Error ? error.message : 'Не удалось проверить роль');
         setIsLoading(false);
       }
     };
     
-    // Запускаем проверку роли (один раз)
-    checkRole();
-  }, [isReady, navigateToRolePage, hideBackButton, hideMainButton]);
+    // Запускаем проверку роли (если WebApp готов)
+    if (isReady) {
+      checkRole();
+    } else {
+      // Если WebApp не готов, показываем кнопки без проверки
+      setIsLoading(false);
+    }
+  }, [isReady, isDevMode, navigateToRolePage, hideBackButton, hideMainButton]);
 
   // Обработка выбора роли пользователем
   const handleRoleSelect = async (role: Role) => {
@@ -135,12 +147,13 @@ const RoleSelectPage = () => {
     }
   };
 
-  const isButtonDisabled = !isReady || isLoading || isSelecting;
+  // В режиме разработки кнопки всегда активны
+  const isButtonDisabled = isDevMode ? isSelecting : (!isReady || isLoading || isSelecting);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-md rounded-lg bg-white p-6 text-center shadow-lg">
-        {!isReady && (
+        {!isReady && !isDevMode && (
           <Button
             onClick={() => (window.location.href = 'https://t.me/taxip2p_bot')}
             className="mt-6"
